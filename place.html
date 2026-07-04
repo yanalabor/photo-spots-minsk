@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Место — Фото-места Минска</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="place-page">
+    
+    <!-- Шапка -->
+    <header>
+        <div class="logo">
+            <a href="index.html" style="color: white; text-decoration: none;">
+                <h1>Фото-места Минска</h1>
+            </a>
+        </div>
+        <nav>
+            <a href="index.html" class="back-btn">← На карту</a>
+            <button id="loginBtn">Войти</button>
+        </nav>
+    </header>
+
+    <!-- Основной контент -->
+    <main class="place-main">
+        <div class="place-container">
+            
+            <!-- Секция с фото и информацией -->
+            <section class="place-hero">
+                <div class="place-gallery">
+                    <img id="placeMainImage" src="" alt="" class="place-main-image">
+                    <div class="place-thumbnails" id="placeThumbnails">
+                        <!-- Миниатюры -->
+                    </div>
+                </div>
+                
+                <div class="place-info-box">
+                    <div class="place-header">
+                        <h1 id="placeName">Загрузка...</h1>
+                        <button id="addToFavBtn" class="fav-btn-large"> В избранное</button>
+                    </div>
+                    
+                    <div class="place-rating-box">
+                        <div class="stars-display" id="starsDisplay">
+                            <span class="star">★</span>
+                            <span class="star">★</span>
+                            <span class="star">★</span>
+                            <span class="star">★</span>
+                            <span class="star">★</span>
+                        </div>
+                        <span id="placeRating" class="rating-number">0.0</span>
+                        <span id="reviewsCount" class="reviews-count">(0 отзывов)</span>
+                    </div>
+                    
+                    <p id="placeDescription" class="place-description">Загрузка...</p>
+                    
+                    <!-- Хэштеги места: кликабельны, ведут к фильтру на карте -->
+                    <div class="place-tags" id="placeTags">
+                        <!-- Теги -->
+                    </div>
+                    
+                    <div class="place-address">
+                        <strong>📍 Координаты:</strong> 
+                        <span id="placeCoords">—</span>
+                    </div>
+                    
+                    <!-- Мини-карта -->
+                    <div id="miniMap" class="mini-map"></div>
+                </div>
+            </section>
+            
+            <!-- Секция с отзывами -->
+            <section class="reviews-section">
+                <h2>Отзывы</h2>
+                
+                <!-- Форма отправки отзыва -->
+                <div class="review-form-box">
+                    <h3>Оставить отзыв</h3>
+                    <form id="reviewForm">
+                        <div class="form-group">
+                            <label>Ваша оценка</label>
+                            <div class="star-rating-input" id="starRatingInput">
+                                <span data-value="1">☆</span>
+                                <span data-value="2">☆</span>
+                                <span data-value="3">☆</span>
+                                <span data-value="4">☆</span>
+                                <span data-value="5">☆</span>
+                            </div>
+                            <input type="hidden" id="reviewRating" value="0">
+                        </div>
+                        <div class="form-group">
+                            <label for="reviewText">Ваш отзыв</label>
+                            <textarea id="reviewText" rows="4" placeholder="Расскажите о ваших впечатлениях..." required></textarea>
+                        </div>
+
+                        <!-- Кнопка добавления фото к отзыву -->
+                        <div class="form-group">
+                            <label>Фото к отзыву</label>
+                            <div class="review-photo-attach">
+                                <button type="button" id="reviewPhotoBtn" class="review-photo-plus-btn" title="Добавить фото">+</button>
+                                <span id="reviewPhotoLabel" class="review-photo-label">Добавить фото</span>
+                                <input type="file" id="reviewPhotoInput" accept="image/*" style="display:none;">
+                            </div>
+                            <img id="reviewPhotoPreview" src="" alt="" style="display:none; max-width:120px; border-radius:8px; margin-top:8px;">
+                        </div>
+
+                        <button type="submit" class="form-submit-btn">Отправить отзыв</button>
+                    </form>
+                </div>
+                
+                <!-- Список отзывов -->
+                <div class="reviews-list" id="reviewsList">
+                    <!-- Отзывы загрузятся через JS -->
+                </div>
+                
+                <div class="no-reviews" id="noReviews" style="display: none;">
+                    <p>💬</p>
+                    <h3>Пока нет отзывов</h3>
+                    <p>Будьте первым, кто оставит отзыв!</p>
+                </div>
+            </section>
+            
+        </div>
+    </main>
+
+    <!-- Подвал -->
+    <footer>
+        <p>Данные карты: © <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a></p>
+    </footer>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="js/api_v2.js"></script>
+    <script src="js/place.js"></script>
+</body>
+</html>

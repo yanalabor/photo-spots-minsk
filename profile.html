@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Личный кабинет — Фото-места Минска</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body class="profile-page">
+
+    <!-- Шапка -->
+    <header>
+        <div class="logo">
+            <a href="index.html" style="color: white; text-decoration: none;">
+                <h1> Фото-места Минска</h1>
+            </a>
+        </div>
+        <nav>
+            <a href="index.html" class="back-btn">← На карту</a>
+            <a href="favorites.html" class="back-btn"> Избранное</a>
+            <button id="logoutBtn" class="logout-btn" title="Выйти"> Выйти</button>
+        </nav>
+    </header>
+
+    <main class="profile-main">
+        <div class="profile-container">
+
+            <!-- Карточка пользователя -->
+            <section class="profile-card">
+                <div class="avatar-container">
+                    <div class="profile-avatar" id="currentAvatar">👤</div>
+
+                    <button id="changeAvatarBtn" class="avatar-action-btn">
+                        <span> Добавить фото профиля</span>
+                    </button>
+
+                    <div id="avatarPicker" class="avatar-picker-panel">
+                        <p class="picker-title">Выберите аватар:</p>
+                        <div class="avatar-options">
+                            <span class="avatar-item">🦁</span>
+                            <span class="avatar-item">🦊</span>
+                            <span class="avatar-item">🐨</span>
+                            <span class="avatar-item">🐼</span>
+                            <span class="avatar-item">🐸</span>
+                            <span class="avatar-item">🐙</span>
+                            <span class="avatar-item">🦄</span>
+
+                            <label class="avatar-upload-label">
+                                <span>+</span>
+                                <input type="file" id="customAvatarInput" accept="image/*" style="display: none;">
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="profile-info">
+                    <h2 id="profileName">Имя пользователя</h2>
+                    <p id="profileEmail">email@example.com</p>
+                    <p class="profile-joined">На сайте с: <span id="profileDate">—</span></p>
+                </div>
+
+                <div class="profile-stats">
+                    <div class="stat">
+                        <span class="stat-number" id="statFavorites">0</span>
+                        <span class="stat-label">В избранном</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-number" id="statReviews">0</span>
+                        <span class="stat-label">Отзывов</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-number" id="statAdded">0</span>
+                        <span class="stat-label">Добавлено мест</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Вкладки -->
+            <div class="profile-tabs">
+                <button class="profile-tab active" data-tab="tab-favorites"> Избранные места</button>
+                <button class="profile-tab" data-tab="tab-reviews"> Мои отзывы</button>
+                <button class="profile-tab" data-tab="tab-my-places"> Мои места</button>
+
+                <button class="profile-tab" data-tab="tab-add"> Добавить место</button>
+            </div>
+
+            <!-- Вкладка: Избранное -->
+            <section class="tab-content active" id="tab-favorites">
+                <div class="profile-favorites-grid" id="profileFavoritesGrid">
+                    <!-- Загрузятся через JS -->
+                </div>
+                <div class="empty-tab" id="emptyFavorites" style="display: none;">
+                    <p></p>
+                    <h3>Нет избранных мест</h3>
+                    <a href="index.html" class="browse-btn">Перейти на карту</a>
+                </div>
+            </section>
+
+            <!-- Вкладка: Отзывы -->
+            <section class="tab-content" id="tab-reviews">
+                <div class="reviews-list" id="profileReviewsList">
+                </div>
+                <div class="empty-tab" id="emptyReviews" style="display: none;">
+                    <p></p>
+                    <h3>Нет отзывов</h3>
+                    <p>Оставляйте отзывы на страницах мест</p>
+                    <a href="index.html" class="browse-btn">Перейти на карту</a>
+                </div>
+            </section>
+
+            <section class="tab-content" id="tab-my-places">
+                <h2> Управление моими местами</h2>
+                <p class="tab-subtitle" style="color: #666; margin-bottom: 20px;">
+                    Здесь отображаются места, предложенные лично вами. Вы можете изменить их данные или удалить.
+                </p>
+
+                <div id="emptyMyPlaces" class="empty-state"
+                    style="display: none; text-align: center; padding: 40px; color: #999;">
+                    <p style="font-size: 48px; margin-bottom: 10px;"></p>
+                    <h3>Вы еще не добавили ни одного места</h3>
+                    <p>Вы можете сделать это на соседней вкладке!</p>
+                </div>
+
+                <div class="my-places-grid" id="profileMyPlacesGrid"
+                    style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px;">
+                </div>
+            </section>
+
+            <section class="tab-content" id="tab-add">
+                <div class="add-place-form">
+                    <h3>Предложить новое место</h3>
+                    <p class="form-subtitle">Выберите точку на карте и заполните информацию. Это место будет видно
+                        только вам.</p>
+
+                    <div id="addPlaceMap" class="add-place-map"></div>
+                    <p class="map-hint"> Кликните по карте, чтобы выбрать местоположение</p>
+
+                    <form id="addPlaceForm">
+                        <input type="hidden" id="addPlaceLat">
+                        <input type="hidden" id="addPlaceLng">
+
+                        <div class="form-group">
+                            <label for="addPlaceName">Название места</label>
+                            <input type="text" id="addPlaceName" placeholder="Например: Несвижский замок" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="addPlaceDesc">Описание</label>
+                            <textarea id="addPlaceDesc" rows="3"
+                                placeholder="Опишите, чем это место интересно для фото..." required></textarea>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="addPlaceTags">Теги (через запятую)</label>
+                            <input type="text" id="addPlaceTags" placeholder="архитектура, история, замок">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="addPlacePhoto">Фото места</label>
+                            <input type="file" id="addPlacePhoto" accept="image/*">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="addPlaceCoords">Координаты</label>
+                            <input type="text" id="addPlaceCoordsDisplay" readonly
+                                placeholder="Выберите точку на карте">
+                        </div>
+
+                        <button type="submit" class="form-submit-btn"> Предложить место</button>
+                    </form>
+
+                    <div class="add-success" id="addSuccess" style="display: none;">
+                        <p>✅</p>
+                        <h3>Место добавлено!</h3>
+                        <p>Оно уже видно на карте — только вам.</p>
+                    </div>
+                </div>
+            </section>
+
+        </div>
+    </main>
+
+    <footer>
+        <p>Данные карты: © <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a></p>
+    </footer>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="js/api_v2.js"></script>
+    <script src="js/profile.js"></script>
+</body>
+
+</html>

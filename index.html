@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Фото-места Минска</title>
+
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+
+    <header>
+        <div class="logo">
+            <h1> Фото-места Минска</h1>
+        </div>
+        <nav>
+            <a href="about.html" class="back-btn"> О проекте</a>
+            <button id="menuToggle" class="menu-toggle" title="Список мест">☰ Места</button>
+            <button id="loginBtn">Войти</button>
+            <button id="logoutBtn" class="logout-btn" style="display: none;" title="Выйти">Выйти</button>
+        </nav>
+    </header>
+
+    <main>
+        <button id="floatMenuBtn" class="float-menu-btn">☰ Места</button>
+
+        <div id="map"></div>
+
+        <aside id="sidebar" class="sidebar-hidden">
+            <div class="sidebar-header">
+                <h2>Популярные места</h2>
+                <button id="closeSidebar" class="close-sidebar">✕</button>
+            </div>
+
+            <div class="search-box">
+                <input type="text" id="searchInput" placeholder="🔍 Поиск мест...">
+            </div>
+            <div class="search-tags-block" style="margin: 10px 16px;">
+                <p style="margin-bottom: 6px; font-size: 14px; color: #666;">Популярные хэштеги:</p>
+                <div id="dynamicHashtagsContainer" style="display: flex; flex-wrap: wrap; gap: 6px;">
+                </div>
+            </div>
+
+            <div class="filter-tags" id="filterTags">
+                <button class="filter-tag active" data-tag="all">Все</button>
+                <button class="filter-tag" data-tag="архитектура">#архитектура</button>
+
+                <button class="filter-tag" data-tag="парк">#парк</button>
+                <button class="filter-tag" data-tag="история">#история</button>
+                <button class="filter-tag" data-tag="город">#город</button>
+            </div>
+
+            <div class="places-count" id="placesCount">Найдено мест: 6</div>
+
+            <ul id="placesList"></ul>
+        </aside>
+
+        <div id="overlay" class="overlay"></div>
+    </main>
+
+    <footer>
+        <p>
+            Данные карты: © <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a>
+            | <a href="about.html">О проекте</a>
+        </p>
+    </footer>
+
+    <div class="modal-overlay" id="authModal">
+        <div class="modal">
+            <div class="modal-tabs">
+                <button class="modal-tab active" data-tab="login">Вход</button>
+                <button class="modal-tab" data-tab="register">Регистрация</button>
+            </div>
+
+            <button class="modal-close" id="closeModal">✕</button>
+
+            <form id="loginForm" class="auth-form active">
+                <h2>Добро пожаловать!</h2>
+                <p class="form-subtitle">Войдите, чтобы сохранять места и добавлять свои</p>
+                <div class="form-group">
+                    <label for="loginEmail">Имя пользователя / Email</label>
+                    <input type="text" id="loginEmail" placeholder="Введите имя" required>
+                </div>
+                <div class="form-group">
+                    <label for="loginPassword">Пароль</label>
+                    <input type="password" id="loginPassword" placeholder="Введите пароль" required minlength="6">
+                </div>
+
+                <div style="text-align: right; margin-top: -10px; margin-bottom: 15px;">
+                    <span id="forgotPasswordLink"
+                        style="font-size: 13px; color: #3498db; cursor: pointer; text-decoration: underline;">Забыли
+                        пароль?</span>
+                </div>
+
+                <button type="submit" class="form-submit-btn">Войти</button>
+                <p class="form-switch">
+                    Нет аккаунта?
+                    <span class="switch-link" data-tab="register">Зарегистрироваться</span>
+                </p>
+            </form>
+
+            <form id="registerForm" class="auth-form">
+                <h2>Создать аккаунт</h2>
+                <p class="form-subtitle">Присоединяйтесь к сообществу</p>
+                <div class="form-group">
+                    <label for="regName">Имя пользователя</label>
+                    <input type="text" id="regName" placeholder="Придумайте имя пользователя" required minlength="2">
+                </div>
+                <div class="form-group">
+                    <label for="regEmail">Email</label>
+                    <input type="email" id="regEmail" placeholder="example@mail.ru" required>
+                </div>
+                <div class="form-group">
+                    <label for="regPassword">Пароль</label>
+                    <input type="password" id="regPassword" placeholder="Минимум 6 символов" required minlength="6">
+                </div>
+                <div class="form-group">
+                    <label for="regPasswordConfirm">Подтвердите пароль</label>
+                    <input type="password" id="regPasswordConfirm" placeholder="Повторите пароль" required
+                        minlength="6">
+                </div>
+                <button type="submit" class="form-submit-btn">Зарегистрироваться</button>
+                <p class="form-switch">
+                    Уже есть аккаунт?
+                    <span class="switch-link" data-tab="login">Войти</span>
+                </p>
+            </form>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="resetPasswordModal"
+        style="display: none; justify-content: center; align-items: center; background: rgba(0,0,0,0.6); position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 2000;">
+        <div class="modal" style="max-width: 400px; padding: 25px; position: relative;">
+            <button class="modal-close" id="closeResetModal">✕</button>
+
+            <div id="resetStepEmail">
+                <h2>Вход по email</h2>
+                <p class="form-subtitle">Введите ваш Email. Мы отправим на него 5-значный код для входа в аккаунт.</p>
+                <div class="form-group">
+                    <label for="resetEmailInput">Ваша почта</label>
+                    <input type="email" id="resetEmailInput" placeholder="example@mail.ru" required>
+                </div>
+                <button id="sendResetCodeBtn" class="form-submit-btn" style="margin-top: 10px;">Получить код</button>
+            </div>
+
+            <div id="resetStepCode" style="display: none;">
+                <h2>Введите код</h2>
+                <p class="form-subtitle">Мы отправили письмо. Пожалуйста, проверьте папку "Входящие" или "Спам".</p>
+                <div class="form-group">
+                    <label for="resetCodeInput">Код подтверждения</label>
+                    <input type="text" id="resetCodeInput" maxlength="5" placeholder="12345"
+                        style="text-align: center; font-size: 24px; letter-spacing: 6px; font-weight: bold;" required>
+                </div>
+                <button id="verifyResetCodeBtn" class="form-submit-btn"
+                    style="background: #2ecc71; margin-top: 10px;">Войти в аккаунт</button>
+                <button id="backToEmailBtn"
+                    style="background: none; border: none; color: #7f8c8d; cursor: pointer; width: 100%; text-align: center; margin-top: 15px; font-size: 14px; text-decoration: underline;">Назад
+                    к вводу Email</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+    <script src="js/api_v2.js?v=2"></script>
+    <script src="js/map.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Фото-места Минска</title>
+
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+
+    <!-- Шапка сайта -->
+    <header>
+        <div class="logo">
+            <h1> Фото-места Минска</h1>
+        </div>
+        <nav>
+            <a href="about.html" class="back-btn">ℹ️ О проекте</a>
+            <button id="menuToggle" class="menu-toggle" title="Список мест">☰ Места</button>
+            <a href="favorites.html" id="favoritesBtn" style="text-decoration: none;">❤️ Избранное</a>
+            <button id="loginBtn">Войти</button>
+            <button id="logoutBtn" class="logout-btn" style="display: none;" title="Выйти">🚪</button>
+        </nav>
+    </header>
+
+    <!-- Основной контент -->
+    <main>
+        <!-- Кнопка открытия панели (плавает на карте) -->
+        <button id="floatMenuBtn" class="float-menu-btn">☰ Места</button>
+
+        <!-- Контейнер для карты -->
+        <div id="map"></div>
+
+        <!-- Боковая панель (скрыта по умолчанию) -->
+        <aside id="sidebar" class="sidebar-hidden">
+            <div class="sidebar-header">
+                <h2>Популярные места</h2>
+                <button id="closeSidebar" class="close-sidebar">✕</button>
+            </div>
+
+            <div class="search-box">
+                <input type="text" id="searchInput" placeholder="🔍 Поиск мест...">
+            </div>
+
+            <div class="filter-tags" id="filterTags">
+                <button class="filter-tag active" data-tag="all">Все</button>
+                <button class="filter-tag" data-tag="архитектура">#архитектура</button>
+                <button class="filter-tag" data-tag="природа">#природа</button>
+                <button class="filter-tag" data-tag="парк">#парк</button>
+                <button class="filter-tag" data-tag="история">#история</button>
+                <button class="filter-tag" data-tag="город">#город</button>
+            </div>
+
+            <div class="places-count" id="placesCount">Найдено мест: 6</div>
+
+            <ul id="placesList"></ul>
+        </aside>
+
+        <!-- Затемнение при открытой панели -->
+        <div id="overlay" class="overlay"></div>
+    </main>
+
+    <!-- Подвал -->
+    <footer>
+        <p>
+            Данные карты: © <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a>
+            | <a href="about.html">О проекте</a>
+        </p>
+    </footer>
+
+    <!-- Модальное окно -->
+    <div class="modal-overlay" id="authModal">
+        <div class="modal">
+            <div class="modal-tabs">
+                <button class="modal-tab active" data-tab="login">Вход</button>
+                <button class="modal-tab" data-tab="register">Регистрация</button>
+            </div>
+            <button class="modal-close" id="closeModal">✕</button>
+
+            <form id="loginForm" class="auth-form active">
+                <h2>Добро пожаловать!</h2>
+                <p class="form-subtitle">Войдите, чтобы сохранять места и добавлять свои</p>
+                <div class="form-group">
+                    <label for="loginEmail">Имя пользователя</label>
+                    <input type="text" id="loginEmail" placeholder="Введите имя пользователя" required>
+                </div>
+                <div class="form-group">
+                    <label for="loginPassword">Пароль</label>
+                    <input type="password" id="loginPassword" placeholder="Введите пароль" required minlength="6">
+                </div>
+                <button type="submit" class="form-submit-btn">Войти</button>
+                <p class="form-switch">
+                    Нет аккаунта?
+                    <span class="switch-link" data-tab="register">Зарегистрироваться</span>
+                </p>
+            </form>
+
+            <form id="registerForm" class="auth-form">
+                <h2>Создать аккаунт</h2>
+                <p class="form-subtitle">Присоединяйтесь к сообществу</p>
+                <div class="form-group">
+                    <label for="regName">Имя пользователя</label>
+                    <input type="text" id="regName" placeholder="Придумайте имя пользователя" required minlength="2">
+                </div>
+                <div class="form-group">
+                    <label for="regEmail">Email</label>
+                    <input type="email" id="regEmail" placeholder="example@mail.ru" required>
+                </div>
+                <div class="form-group">
+                    <label for="regPassword">Пароль</label>
+                    <input type="password" id="regPassword" placeholder="Минимум 6 символов" required minlength="6">
+                </div>
+                <div class="form-group">
+                    <label for="regPasswordConfirm">Подтвердите пароль</label>
+                    <input type="password" id="regPasswordConfirm" placeholder="Повторите пароль" required
+                        minlength="6">
+                </div>
+                <button type="submit" class="form-submit-btn">Зарегистрироваться</button>
+                <p class="form-switch">
+                    Уже есть аккаунт?
+                    <span class="switch-link" data-tab="login">Войти</span>
+                </p>
+            </form>
+        </div>
+    </div>
+
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+    <script src="js/api_v2.js?v=2"></script>
+    <script src="js/map.js"></script>
+</body>
+
+</html>
