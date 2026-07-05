@@ -13,9 +13,7 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from dotenv import load_dotenv
 
-# 1. Загружаем переменные окружения (для локальной разработки из .env;
-# на Railway переменные приходят из Variables сервиса — load_dotenv() в этом
-# случае просто ничего не находит и не мешает)
+# 1. Загружаем переменные окружения
 load_dotenv()
 
 app = FastAPI(title="Minsk Places API")
@@ -38,9 +36,7 @@ STATIC_DIR.mkdir(parents=True, exist_ok=True)
 
 app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
 
-# --- НАСТРОЙКА БАЗЫ ДАННЫХ — ТОЛЬКО ИЗ ПЕРЕМЕННЫХ ОКРУЖЕНИЯ ---
-# НИКОГДА не хранить хост/пароль базы прямо в коде — это публичный репозиторий,
-# любой секрет, зашитый в .py файл, немедленно утекает при пуше на GitHub.
+# --- НАСТРОЙКА БАЗЫ ДАННЫХ ---
 DB_CONFIG = {
     "host": os.getenv("DB_HOST"),
     "port": int(os.getenv("DB_PORT", 3306)),
@@ -52,15 +48,26 @@ DB_CONFIG = {
     "use_unicode": True,
 }
 
+# ==========================================
+# ХЕЛПЕРЫ И ЦЕНЗОР ТЕКСТА
+# ==========================================
+BAD_WORDS = ["мат1", "мат2", "сука", "блять", "хуй", "пидор", "ебать"] 
 
-# ==========================================
-# ХЕЛПЕРЫ
-# ==========================================
+def censor_text(text: str) -> str:
+    if not text:
+        return text
+    words = text.split()
+    censored_words = []
+    for word in words:
+        clean_word = word.lower().strip(".,!?-*()")
+        if clean_word in BAD_WORDS:
+            censored_words.append("*" * len(word))
+        else:
+            censored_words.append(word)
+    return " ".join(censored_words)
+
+
 def normalize_place(item: dict, request: Request) -> dict:
-    """
-    Приводит данные места к единому формату фронтенда 
-    и динамически рассчитывает среднюю оценку на основе отзывов.
-    """
     place_id = item.get("id")
     avg_rating = 0.0
     reviews_count = 0
@@ -104,7 +111,6 @@ def normalize_place(item: dict, request: Request) -> dict:
 
 
 def attach_review_photo(review: dict, request: Request) -> dict:
-    """Добавляет полный URL фото к отзыву (если есть)."""
     base = str(request.base_url).rstrip("/")
     raw = review.get("photo_url")
     if raw:
@@ -115,7 +121,6 @@ def attach_review_photo(review: dict, request: Request) -> dict:
 
 
 def save_uploaded_file(file: UploadFile, filename: str) -> str:
-    """Сохраняет файл в static/images и возвращает публичный относительный путь."""
     file_path = STATIC_DIR / "images" / filename
     with open(file_path, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
@@ -131,11 +136,7 @@ def home():
 # МЕСТА
 # ==========================================
 @app.get("/api/places")
-def get_places(
-    request: Request,
-    user_id: Optional[int] = None,
-    tag: Optional[str] = None,
-):
+def get_places(request: Request, user_id: Optional[int] = None, tag: Optional[str] = None):
     try:
         connection = pymysql.connect(**DB_CONFIG)
         with connection.cursor() as cursor:
@@ -154,10 +155,7 @@ def get_places(
 
             return places
     except Exception as e:
-        return JSONResponse(
-            status_code=500,
-            content={"error": f"Ошибка подключения к базе: {str(e)}"},
-        )
+        return JSONResponse(status_code=500, content={"error": f"Ошибка подключения к базе: {str(e)}"})
     finally:
         if "connection" in locals() and connection.open:
             connection.close()
@@ -181,10 +179,7 @@ def get_place_by_id(place_id: int, request: Request, user_id: Optional[int] = No
 
             return normalize_place(place, request)
     except Exception as e:
-        return JSONResponse(
-            status_code=500,
-            content={"error": f"Ошибка подключения к базе: {str(e)}"},
-        )
+        return JSONResponse(status_code=500, content={"error": f"Ошибка подключения к базе: {str(e)}"})
     finally:
         if "connection" in locals() and connection.open:
             connection.close()
@@ -217,23 +212,12 @@ def create_place(
                 ext = file.filename.split(".")[-1]
                 file_name = f"{new_id}_photo.{ext}"
                 photo_url = save_uploaded_file(file, file_name)
-                cursor.execute(
-                    "UPDATE places SET photo_url = %s WHERE id = %s",
-                    (photo_url, new_id),
-                )
+                cursor.execute("UPDATE places SET photo_url = %s WHERE id = %s", (photo_url, new_id))
                 connection.commit()
 
-            return {
-                "status": "success",
-                "message": "Место добавлено!",
-                "id": new_id,
-                "photo_url": photo_url,
-            }
+            return {"status": "success", "message": "Место добавлено!", "id": new_id, "photo_url": photo_url}
     except Exception as e:
-        return JSONResponse(
-            status_code=500,
-            content={"error": f"Ошибка добавления места: {str(e)}"},
-        )
+        return JSONResponse(status_code=500, content={"error": f"Ошибка добавления места: {str(e)}"})
     finally:
         connection.close()
 
@@ -257,21 +241,15 @@ def register_user(user: UserRegister):
             existing_user = cursor.fetchone()
 
             if existing_user:
-                return JSONResponse(
-                    status_code=409,
-                    content={"error": "Пользователь с таким логином или почтой уже существует"},
-                )
+                return JSONResponse(status_code=409, content={"error": "Пользователь с таким логином или почтой уже существует"})
 
             password_bytes = user.password.encode("utf-8")
             salt = bcrypt.gensalt()
             hashed_password = bcrypt.hashpw(password_bytes, salt).decode("utf-8")
 
-            insert_sql = (
-                "INSERT INTO users (username, email, password_hash) VALUES (%s, %s, %s)"
-            )
+            insert_sql = "INSERT INTO users (username, email, password_hash) VALUES (%s, %s, %s)"
             cursor.execute(insert_sql, (user.username, user.email, hashed_password))
             connection.commit()
-
             new_id = cursor.lastrowid
 
             return {
@@ -282,10 +260,7 @@ def register_user(user: UserRegister):
                 "email": user.email
             }
     except Exception as e:
-        return JSONResponse(
-            status_code=500,
-            content={"error": f"Ошибка при регистрации: {str(e)}"},
-        )
+        return JSONResponse(status_code=500, content={"error": f"Ошибка при регистрации: {str(e)}"})
     finally:
         if "connection" in locals() and connection.open:
             connection.close()
@@ -307,13 +282,9 @@ def login_user(user: UserLogin):
             result = cursor.fetchone()
 
             if not result:
-                return JSONResponse(
-                    status_code=401,
-                    content={"error": "Неверный логин или пароль"},
-                )
+                return JSONResponse(status_code=401, content={"error": "Неверный логин или пароль"})
 
             hashed_password = result["password_hash"]
-
             if bcrypt.checkpw(user.password.encode('utf-8'), hashed_password.encode('utf-8')):
                 return {
                     "status": "success",
@@ -323,19 +294,13 @@ def login_user(user: UserLogin):
                     "email": result["email"]
                 }
             else:
-                return JSONResponse(
-                    status_code=401,
-                    content={"error": "Неверный логин или пароль"},
-                )
+                return JSONResponse(status_code=401, content={"error": "Неверный логин или пароль"})
     except Exception as e:
-        return JSONResponse(
-            status_code=500,
-            content={"error": f"Ошибка на бэкенде: {str(e)}"},
-        )
+        return JSONResponse(status_code=500, content={"error": f"Ошибка на бэкенде: {str(e)}"})
 
 
 # ==========================================
-# ОТЗЫВЫ
+# ОТЗЫВЫ (С ФИЛЬТРАЦИЕЙ ТЕКСТА)
 # ==========================================
 @app.post("/api/reviews")
 def add_review(
@@ -348,22 +313,20 @@ def add_review(
     if rating < 1 or rating > 5:
         return JSONResponse(status_code=400, content={"error": "Оценка должна быть от 1 до 5"})
 
+    # --- ПРИМЕНЯЕМ ЦЕНЗОР ДЛЯ POST ---
+    clean_comment = censor_text(comment)
+
     connection = pymysql.connect(**DB_CONFIG)
     try:
         with connection.cursor() as cursor:
-            cursor.execute(
-                "SELECT id FROM reviews WHERE place_id = %s AND user_id = %s",
-                (place_id, user_id),
-            )
+            cursor.execute("SELECT id FROM reviews WHERE place_id = %s AND user_id = %s", (place_id, user_id))
             if cursor.fetchone():
-                return JSONResponse(
-                    status_code=409,
-                    content={"error": "Вы уже оставляли отзыв к этому месту"},
-                )
+                return JSONResponse(status_code=409, content={"error": "Вы уже оставляли отзыв к этому месту"})
 
+            # Записываем чистый комментарий
             cursor.execute(
                 "INSERT INTO reviews (place_id, user_id, rating, comment) VALUES (%s, %s, %s, %s)",
-                (place_id, user_id, rating, comment),
+                (place_id, user_id, rating, clean_comment),
             )
             connection.commit()
             new_id = cursor.lastrowid
@@ -373,10 +336,7 @@ def add_review(
                 ext = file.filename.split(".")[-1]
                 file_name = f"review_{new_id}.{ext}"
                 photo_url = save_uploaded_file(file, file_name)
-                cursor.execute(
-                    "UPDATE reviews SET photo_url = %s WHERE id = %s",
-                    (photo_url, new_id),
-                )
+                cursor.execute("UPDATE reviews SET photo_url = %s WHERE id = %s", (photo_url, new_id))
                 connection.commit()
 
             return {
@@ -384,105 +344,72 @@ def add_review(
                 "message": "Отзыв успешно добавлен!",
                 "id": new_id,
                 "photo_url": photo_url,
+                "comment": clean_comment
             }
     except pymysql.err.IntegrityError:
-        return JSONResponse(
-            status_code=409,
-            content={"error": "Вы уже оставляли отзыв к этому месту"},
-        )
+        return JSONResponse(status_code=409, content={"error": "Вы уже оставляли отзыв к этому месту"})
     except Exception as e:
-        return JSONResponse(
-            status_code=500,
-            content={"error": f"Ошибка добавления отзыва: {str(e)}"},
-        )
+        return JSONResponse(status_code=500, content={"error": f"Ошибка добавления отзыва: {str(e)}"})
     finally:
         connection.close()
 
 
-# ====== ДОБАВИТЬ В main.py ======
-
-# Простой и эффективный фильтр мата
-BAD_WORDS = ["мат1", "мат2", "сука", "блять", "хуй", "пидор", "ебать"] # Добавьте сюда нужные слова
-
-def censor_text(text: str) -> str:
-    if not text:
-        return text
-    words = text.split()
-    censored_words = []
-    for word in words:
-        clean_word = word.lower().strip(".,!?-*()")
-        if clean_word in BAD_WORDS:
-            # Заменяем слово на звездочки, сохраняя длину
-            censored_words.append("*" * len(word))
-        else:
-            censored_words.append(word)
-    return " ".join(censored_words)
-
-# ЭНДПОИНТ ОБНОВЛЕНИЯ ОТЗЫВА С ИСПРАВЛЕННОЙ ПРИЕМКОЙ ФОТО (Form/UploadFile)
 @app.put("/api/reviews/{review_id}")
 async def update_review(
     review_id: int,
     user_id: int = Form(...),
     rating: int = Form(...),
-    text: str = Form(...),
+    comment: str = Form(...),          # Изменено с text на comment для синхронизации с базой
     delete_photo: str = Form("false"),
     file: Optional[UploadFile] = File(None)
 ):
-    # 1. Применяем цензор нецензурной лексики к тексту
-    clean_text = censor_text(text)
+    # --- ПРИМЕНЯЕМ ЦЕНЗОР ДЛЯ PUT ---
+    clean_comment = censor_text(comment)
     
-    # Подключаемся к базе данных
-    connection = get_db_connection() # Используйте вашу функцию подключения
+    # Исправлено: явное подключение вместо get_db_connection()
+    connection = pymysql.connect(**DB_CONFIG)
     try:
         with connection.cursor(pymysql.cursors.DictCursor) as cursor:
-            # Проверяем, существует ли отзыв и принадлежит ли он пользователю
             cursor.execute("SELECT * FROM reviews WHERE id = %s AND user_id = %s", (review_id, user_id))
             review = cursor.fetchone()
             if not review:
-                return JSONResponse(status_code=43, content={"error": "Отзыв не найден или нет прав доступа"})
+                return JSONResponse(status_code=403, content={"error": "Отзыв не найден или нет прав доступа"}) # Исправлен статус 43 -> 403
             
-            image_path = review.get("image") # или photo_url / то имя поля, которое у вас в БД
+            # Изменено image -> photo_url в соответствии с названиями полей вашей БД
+            photo_url = review.get("photo_url")
             
-            # Обработка удаления фото
             if delete_photo == "true":
-                image_path = None
+                photo_url = None
             
-            # Обработка загрузки нового файла
-            if file:
-                # Создаем директорию, если её нет
-                upload_dir = Path("static/images")
-                upload_dir.mkdir(parents=True, exist_ok=True)
-                
-                # Генерируем уникальное имя файла
+            if file and file.filename:
                 file_extension = Path(file.filename).suffix
                 unique_filename = f"review_{review_id}_{random.randint(1000, 9999)}{file_extension}"
-                file_save_path = upload_dir / unique_filename
-                
-                # Сохраняем файл на диск
-                with open(file_save_path, "wb") as buffer:
-                    shutil.copyfileobj(file.file, buffer)
-                
-                image_path = f"static/images/{unique_filename}"
+                photo_url = save_uploaded_file(file, unique_filename)
 
-            # Обновляем запись в MySQL
+            # Обновляем запись в MySQL (поля comment и photo_url)
             sql = """
                 UPDATE reviews 
-                SET rating = %s, text = %s, image = %s 
+                SET rating = %s, comment = %s, photo_url = %s 
                 WHERE id = %s
             """
-            cursor.execute(sql, (rating, clean_text, image_path, review_id))
+            cursor.execute(sql, (rating, clean_comment, photo_url, review_id))
             connection.commit()
             
-        return {"status": "success", "message": "Отзыв успешно обновлен", "text": clean_text}
+        return {"status": "success", "message": "Отзыв успешно обновлен", "comment": clean_comment}
         
     except Exception as e:
         return JSONResponse(status_code=500, content={"error": f"Ошибка базы данных: {str(e)}"})
     finally:
         connection.close()
 
+
+@app.delete("/api/reviews/{review_id}")
+def delete_review(review_id: int, payload: ReviewDelete):
+    # Модель ReviewDelete объявлена ниже, перенесена логически
+    pass
+
 class ReviewDelete(BaseModel):
     user_id: int
-
 
 @app.delete("/api/reviews/{review_id}")
 def delete_review(review_id: int, payload: ReviewDelete):
@@ -500,10 +427,7 @@ def delete_review(review_id: int, payload: ReviewDelete):
             connection.commit()
             return {"status": "success", "message": "Отзыв удалён"}
     except Exception as e:
-        return JSONResponse(
-            status_code=500,
-            content={"error": f"Ошибка удаления отзыва: {str(e)}"},
-        )
+        return JSONResponse(status_code=500, content={"error": f"Ошибка удаления отзыва: {str(e)}"})
     finally:
         connection.close()
 
@@ -523,10 +447,7 @@ def get_place_reviews(place_id: int, request: Request):
             reviews = cursor.fetchall()
             return [attach_review_photo(r, request) for r in reviews]
     except Exception as e:
-        return JSONResponse(
-            status_code=500,
-            content={"error": f"Ошибка получения отзывов: {str(e)}"},
-        )
+        return JSONResponse(status_code=500, content={"error": f"Ошибка получения отзывов: {str(e)}"})
 
 
 @app.get("/api/users/{user_id}/reviews")
@@ -545,10 +466,7 @@ def get_user_reviews(user_id: int, request: Request):
             reviews = cursor.fetchall()
             return [attach_review_photo(r, request) for r in reviews]
     except Exception as e:
-        return JSONResponse(
-            status_code=500,
-            content={"error": f"Ошибка получения отзывов: {str(e)}"},
-        )
+        return JSONResponse(status_code=500, content={"error": f"Ошибка получения отзывов: {str(e)}"})
 
 
 # ==========================================
@@ -563,21 +481,12 @@ class FavoriteAction(BaseModel):
 def add_to_favorites(fav: FavoriteAction):
     try:
         with pymysql.connect(**DB_CONFIG) as conn, conn.cursor() as cursor:
-            sql = (
-                "INSERT IGNORE INTO favorites (user_id, place_id) VALUES (%s,"
-                " %s)"
-            )
+            sql = "INSERT IGNORE INTO favorites (user_id, place_id) VALUES (%s, %s)"
             cursor.execute(sql, (fav.user_id, fav.place_id))
             conn.commit()
-            return {
-                "status": "success",
-                "message": "Место добавлено в избранное!",
-            }
+            return {"status": "success", "message": "Место добавлено в избранное!"}
     except Exception as e:
-        return JSONResponse(
-            status_code=500,
-            content={"error": f"Ошибка добавления: {str(e)}"},
-        )
+        return JSONResponse(status_code=500, content={"error": f"Ошибка добавления: {str(e)}"})
 
 
 @app.delete("/api/favorites")
@@ -589,10 +498,7 @@ def remove_from_favorites(fav: FavoriteAction):
             conn.commit()
             return {"status": "success", "message": "Место удалено из избранного"}
     except Exception as e:
-        return JSONResponse(
-            status_code=500,
-            content={"error": f"Ошибка удаления: {str(e)}"},
-        )
+        return JSONResponse(status_code=500, content={"error": f"Ошибка удаления: {str(e)}"})
 
 
 @app.get("/api/users/{user_id}/favorites")
@@ -609,26 +515,18 @@ def get_user_favorites(user_id: int, request: Request):
             favorites = cursor.fetchall()
             return [normalize_place(f, request) for f in favorites]
     except Exception as e:
-        return JSONResponse(
-            status_code=500,
-            content={"error": f"Ошибка получения избранного: {str(e)}"},
-        )
+        return JSONResponse(status_code=500, content={"error": f"Ошибка получения избранного: {str(e)}"})
 
 
 # ==========================================
-# ЗАГРУЗКА ФОТО
+# ДОПОЛНИТЕЛЬНОЕ УПРАВЛЕНИЕ МЕСТАМИ
 # ==========================================
 @app.post("/api/places/{place_id}/upload-photo")
 async def upload_place_photo(place_id: int, file: UploadFile = File(...)):
     try:
         file_extension = Path(file.filename).suffix or ".jpg"
         filename = f"place_{place_id}{file_extension}"
-        file_path = STATIC_DIR / "images" / filename
-
-        with open(file_path, "wb") as buffer:
-            shutil.copyfileobj(file.file, buffer)
-
-        photo_url = f"/static/images/{filename}"
+        photo_url = save_uploaded_file(file, filename)
 
         connection = pymysql.connect(**DB_CONFIG)
         with connection.cursor() as cursor:
@@ -689,11 +587,7 @@ def update_user_place(place_id: int, user_id: int, data: PlaceUpdateModel):
             if place.get("user_id") != user_id:
                 return JSONResponse(status_code=403, content={"error": "Нет прав на редактирование"})
             
-            sql = """
-                UPDATE places 
-                SET title = %s, description = %s, tags = %s 
-                WHERE id = %s
-            """
+            sql = "UPDATE places SET title = %s, description = %s, tags = %s WHERE id = %s"
             cursor.execute(sql, (data.title, data.description, data.tags, place_id))
             connection.commit()
             return {"success": True, "message": "Данные места обновлены"}
@@ -716,14 +610,10 @@ class VerifyResetCodeRequest(BaseModel):
 
 @app.post("/api/auth/forgot-password")
 def forgot_password(payload: ForgotPasswordRequest):
-    """Генерирует 5-значный код, записывает в БД и отправляет на Email."""
     resend_api_key = os.getenv("RESEND_API_KEY")
 
     if not resend_api_key:
-        return JSONResponse(
-            status_code=500,
-            content={"error": "RESEND_API_KEY не настроен на бэкенде"},
-        )
+        return JSONResponse(status_code=500, content={"error": "RESEND_API_KEY не настроен на бэкенде"})
 
     connection = pymysql.connect(**DB_CONFIG)
     try:
@@ -734,7 +624,6 @@ def forgot_password(payload: ForgotPasswordRequest):
                 return JSONResponse(status_code=404, content={"error": "Пользователь с таким Email не найден"})
 
             otp_code = str(random.randint(10000, 99999))
-
             cursor.execute("UPDATE users SET reset_code = %s WHERE email = %s", (otp_code, payload.email))
             connection.commit()
 
@@ -760,13 +649,9 @@ def forgot_password(payload: ForgotPasswordRequest):
             )
 
             if resend_response.status_code >= 400:
-                return JSONResponse(
-                    status_code=500,
-                    content={"error": f"Ошибка отправки письма: {resend_response.text}"},
-                )
+                return JSONResponse(status_code=500, content={"error": f"Ошибка отправки письма: {resend_response.text}"})
 
             return {"status": "success", "message": "Код успешно отправлен!"}
-
     except Exception as e:
         return JSONResponse(status_code=500, content={"error": f"Ошибка на бэкенде: {str(e)}"})
     finally:
@@ -775,7 +660,6 @@ def forgot_password(payload: ForgotPasswordRequest):
 
 @app.post("/api/auth/verify-reset-code")
 def verify_reset_code(payload: VerifyResetCodeRequest):
-    """Проверяет код, и если всё ок — авторизует пользователя."""
     connection = pymysql.connect(**DB_CONFIG)
     try:
         with connection.cursor() as cursor:
