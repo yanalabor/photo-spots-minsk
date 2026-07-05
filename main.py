@@ -399,62 +399,86 @@ def add_review(
         connection.close()
 
 
+# ====== ДОБАВИТЬ В main.py ======
+
+# Простой и эффективный фильтр мата
+BAD_WORDS = ["мат1", "мат2", "сука", "блять", "хуй", "пидор", "ебать"] # Добавьте сюда нужные слова
+
+def censor_text(text: str) -> str:
+    if not text:
+        return text
+    words = text.split()
+    censored_words = []
+    for word in words:
+        clean_word = word.lower().strip(".,!?-*()")
+        if clean_word in BAD_WORDS:
+            # Заменяем слово на звездочки, сохраняя длину
+            censored_words.append("*" * len(word))
+        else:
+            censored_words.append(word)
+    return " ".join(censored_words)
+
+# ЭНДПОИНТ ОБНОВЛЕНИЯ ОТЗЫВА С ИСПРАВЛЕННОЙ ПРИЕМКОЙ ФОТО (Form/UploadFile)
 @app.put("/api/reviews/{review_id}")
-def update_review(
+async def update_review(
     review_id: int,
     user_id: int = Form(...),
-    rating: Optional[int] = Form(None),
-    comment: Optional[str] = Form(None),
-    delete_photo: Optional[bool] = Form(False),
-    file: Optional[UploadFile] = File(None),
+    rating: int = Form(...),
+    text: str = Form(...),
+    delete_photo: str = Form("false"),
+    file: Optional[UploadFile] = File(None)
 ):
-    connection = pymysql.connect(**DB_CONFIG)
+    # 1. Применяем цензор нецензурной лексики к тексту
+    clean_text = censor_text(text)
+    
+    # Подключаемся к базе данных
+    connection = get_db_connection() # Используйте вашу функцию подключения
     try:
-        with connection.cursor() as cursor:
-            cursor.execute("SELECT user_id FROM reviews WHERE id = %s", (review_id,))
-            row = cursor.fetchone()
-            if not row:
-                return JSONResponse(status_code=404, content={"error": "Отзыв не найден"})
-            if row["user_id"] != user_id:
-                return JSONResponse(status_code=403, content={"error": "Нельзя редактировать чужой отзыв"})
+        with connection.cursor(pymysql.cursors.DictCursor) as cursor:
+            # Проверяем, существует ли отзыв и принадлежит ли он пользователю
+            cursor.execute("SELECT * FROM reviews WHERE id = %s AND user_id = %s", (review_id, user_id))
+            review = cursor.fetchone()
+            if not review:
+                return JSONResponse(status_code=43, content={"error": "Отзыв не найден или нет прав доступа"})
+            
+            image_path = review.get("image") # или photo_url / то имя поля, которое у вас в БД
+            
+            # Обработка удаления фото
+            if delete_photo == "true":
+                image_path = None
+            
+            # Обработка загрузки нового файла
+            if file:
+                # Создаем директорию, если её нет
+                upload_dir = Path("static/images")
+                upload_dir.mkdir(parents=True, exist_ok=True)
+                
+                # Генерируем уникальное имя файла
+                file_extension = Path(file.filename).suffix
+                unique_filename = f"review_{review_id}_{random.randint(1000, 9999)}{file_extension}"
+                file_save_path = upload_dir / unique_filename
+                
+                # Сохраняем файл на диск
+                with open(file_save_path, "wb") as buffer:
+                    shutil.copyfileobj(file.file, buffer)
+                
+                image_path = f"static/images/{unique_filename}"
 
-            updates = []
-            params = []
-
-            if rating is not None:
-                if rating < 1 or rating > 5:
-                    return JSONResponse(status_code=400, content={"error": "Оценка должна быть от 1 до 5"})
-                updates.append("rating = %s")
-                params.append(rating)
-
-            if comment is not None:
-                updates.append("comment = %s")
-                params.append(comment)
-
-            if file is not None and file.filename:
-                ext = file.filename.split(".")[-1]
-                file_name = f"review_{review_id}.{ext}"
-                photo_url = save_uploaded_file(file, file_name)
-                updates.append("photo_url = %s")
-                params.append(photo_url)
-            elif delete_photo:
-                updates.append("photo_url = NULL")
-
-            if updates:
-                params.append(review_id)
-                sql = f"UPDATE reviews SET {', '.join(updates)} WHERE id = %s"
-                cursor.execute(sql, tuple(params))
-                connection.commit()
-
-            return {"status": "success", "message": "Отзыв обновлён"}
+            # Обновляем запись в MySQL
+            sql = """
+                UPDATE reviews 
+                SET rating = %s, text = %s, image = %s 
+                WHERE id = %s
+            """
+            cursor.execute(sql, (rating, clean_text, image_path, review_id))
+            connection.commit()
+            
+        return {"status": "success", "message": "Отзыв успешно обновлен", "text": clean_text}
+        
     except Exception as e:
-        return JSONResponse(
-            status_code=500,
-            content={"error": f"Ошибка обновления отзыва: {str(e)}"},
-        )
+        return JSONResponse(status_code=500, content={"error": f"Ошибка базы данных: {str(e)}"})
     finally:
         connection.close()
-
 
 class ReviewDelete(BaseModel):
     user_id: int
