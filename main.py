@@ -38,11 +38,12 @@ STATIC_DIR.mkdir(parents=True, exist_ok=True)
 
 app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
 
+# --- НАСТРОЙКА БАЗЫ ДАННЫХ ЖЕСТКО В КОДЕ ---
 DB_CONFIG = {
-    "host": os.getenv("DB_HOST"),
-    "user": os.getenv("DB_USER"),
-    "password": os.getenv("DB_PASSWORD"),
-    "database": os.getenv("DB_NAME"),
+    "host": "mysql.railway.internal",
+    "user": "root",
+    "password": "JMffDxVEioeIlmsUpkcaXlaRGammISgr", 
+    "database": "minsk_places_db",
     "cursorclass": pymysql.cursors.DictCursor,
 }
 
