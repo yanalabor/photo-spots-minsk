@@ -20,6 +20,14 @@ load_dotenv()
 
 app = FastAPI(title="Minsk Places API")
 
+app = FastAPI(title="Minsk Places API")
+
+import os
+print("=== ПРОВЕРКА КЛЮЧА RESEND В RAILWAY ===")
+print("Ключ найден:", os.getenv("RESEND_API_KEY") is not None)
+print("=======================================")
+
+
 # --- НАСТРОЙКА CORS ---
 app.add_middleware(
     CORSMiddleware,
