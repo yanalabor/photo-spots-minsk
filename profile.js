@@ -185,6 +185,11 @@ function renderReviewsTab(reviews) {
                 const base = API_BASE.endsWith('/') ? API_BASE.slice(0, -1) : API_BASE;
                 reviewImageUrl = `${base}/${cleanPath}`;
             }
+
+            // Мягкая подстраховка: если ссылка начинается с http://, меняем на https://
+            if (reviewImageUrl.startsWith('http://')) {
+                reviewImageUrl = reviewImageUrl.replace('http://', 'https://');
+            }
         }
 
         item.innerHTML = `
