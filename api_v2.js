@@ -3,7 +3,7 @@
 // ==========================================
 
 
-const API_URL = "https://photo-spots-minsk-production.up.railway.app/";
+const API_BASE = "https://photo-spots-minsk-production.up.railway.app/";
 
 // Текущий пользователь (сохраняется после входа)
 let currentUser = JSON.parse(localStorage.getItem('currentUser') || 'null');
