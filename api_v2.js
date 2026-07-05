@@ -181,8 +181,29 @@ async function createPlace({ title, description, latitude, longitude, tags, file
 }
 
 // ==========================================
-// ОТЗЫВЫ
+// ОТЗЫВЫ И ПРОВЕРКА ЦЕНЗУРЫ
 // ==========================================
+
+// 1. Список запрещенных слов (дополняй его нужными словами строго в нижнем регистре)
+const FORBIDDEN_WORDS = ['слово1', 'слово2', 'плохоеслово', 'мат'];
+
+/**
+ * Функция проверки текста на нецензурную лексику
+ */
+function containsBadWords(text) {
+    if (!text) return false;
+    
+    // Переводим в нижний регистр и очищаем от пробелов/знаков препинания для точной проверки
+    const cleanText = text.toLowerCase().replace(/[^а-яёa-z0-9]/g, '');
+    
+    // Ищем совпадения
+    for (let word of FORBIDDEN_WORDS) {
+        if (cleanText.includes(word)) {
+            return true; // Найдено запрещенное слово
+        }
+    }
+    return false;
+}
 
 async function fetchReviews(placeId) {
     const data = await apiRequest(`/api/places/${placeId}/reviews`);
@@ -194,8 +215,16 @@ async function fetchUserReviews(userId) {
     return Array.isArray(data) ? data : (data.reviews || []);
 }
 
+// ИСПРАВЛЕНО: добавлена моментальная проверка комментария перед отправкой
 async function addReview(placeId, rating, comment, file) {
     if (!isLoggedIn()) throw new Error('Необходимо войти');
+
+    // Проверяем комментарий на мат перед тем как дергать бэкенд Railway
+    if (containsBadWords(comment)) {
+        const errorMsg = '⚠️ Ваш комментарий содержит недопустимую лексику и не может быть опубликован.';
+        alert(errorMsg); // Показываем всплывающее окно пользователю
+        throw new Error(errorMsg); // Блокируем дальнейшее выполнение функции
+    }
 
     const formData = new FormData();
     formData.append('place_id', placeId);
@@ -214,6 +243,13 @@ async function addReview(placeId, rating, comment, file) {
 
 async function updateReview(reviewId, { rating, comment, file } = {}) {
     if (!isLoggedIn()) throw new Error('Необходимо войти');
+
+    // ПРОВЕРКА ПРИ РЕДАКТИРОВАНИИ: Если текст комментария меняется, проверяем его на мат
+    if (comment && containsBadWords(comment)) {
+        const errorMsg = '⚠️ Измененный комментарий содержит недопустимую лексику и не может быть обновлен.';
+        alert(errorMsg);
+        throw new Error(errorMsg);
+    }
 
     const formData = new FormData();
     formData.append('user_id', getUserId());
