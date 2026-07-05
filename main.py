@@ -13,28 +13,23 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from dotenv import load_dotenv
 
-# 1. Загружаем переменные окружения
+# 1. Загружаем переменные окружения (для локальной разработки из .env;
+# на Railway переменные приходят из Variables сервиса — load_dotenv() в этом
+# случае просто ничего не находит и не мешает)
 load_dotenv()
 
 app = FastAPI(title="Minsk Places API")
 
 # --- НАСТРОЙКА CORS ---
 app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
-# --- Динамическое вычисление пути к папке static ---
-BASE_DIR = Path(__file__).resolve().parent
-STATIC_DIR = BASE_DIR / "static"
-
-STATIC_DIR.mkdir(parents=True, exist_ok=True)
-(STATIC_DIR / "images").mkdir(parents=True, exist_ok=True)
-
-app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
+# --- Динамическое вычисление пути к папке statapp.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
 
 # --- НАСТРОЙКА БАЗЫ ДАННЫХ ---
 DB_CONFIG = {
