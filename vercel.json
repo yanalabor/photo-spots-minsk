@@ -1,7 +1,6 @@
 {
-  "builds": [
-    { "src": "index.html", "use": "@vercel/static" },
-    { "src": "map.js", "use": "@vercel/static" },
-    { "src": "*.css", "use": "@vercel/static" }
+  "cleanUrls": true,
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/$1" }
   ]
 }
