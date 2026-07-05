@@ -308,7 +308,7 @@ function renderReviewsTab(reviews) {
                     const formData = new FormData();
                     formData.append('user_id', parseInt(currentUserId));
                     formData.append('rating', newRating);
-                    formData.append('text', newText);
+                    formData.append('comment', newText);
                     formData.append('delete_photo', shouldDeletePhoto ? 'true' : 'false');
 
                     if (fileToUpload) {
