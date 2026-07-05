@@ -166,12 +166,16 @@ function renderReviewsTab(reviews) {
         const starsHtml = '⭐'.repeat(ratingValue) + '☆'.repeat(5 - ratingValue);
 
         // ЖЕЛЕЗНО берём путь к фото из базы данных
-        let reviewImageUrl = review.image || review.photo_url|| null;
+        let reviewImageUrl = review.image || review.photo_url || review.image_path || null;
 
-        // Если вдруг пришёл только относительный путь (без готового image) — достраиваем
-        // через API_BASE (реальный адрес бэкенда), а не захардкоженный localhost
         if (reviewImageUrl && !reviewImageUrl.startsWith('http')) {
-        reviewImageUrl = `${API_BASE}${reviewImageUrl.startsWith('/') ? '' : '/'}${reviewImageUrl}`;
+            // Если в пути ещё нет '/static/', добавляем правильный префикс папки бэкенда
+            if (!reviewImageUrl.includes('/static/')) {
+                const cleanPath = reviewImageUrl.startsWith('/') ? reviewImageUrl.substring(1) : reviewImageUrl;
+                reviewImageUrl = `/static/images/${cleanPath}`;
+            }
+            // Соединяем с базовым URL бэкенда
+            reviewImageUrl = `${API_BASE}${reviewImageUrl.startsWith('/') ? '' : '/'}${reviewImageUrl}`;
         }
 
         item.innerHTML = `
