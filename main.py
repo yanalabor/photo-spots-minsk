@@ -738,7 +738,6 @@ def forgot_password(payload: ForgotPasswordRequest):
                 },
                 timeout=10,
             )
-            # Добавь эту строчку, чтобы увидеть реальный ответ от Resend:
             print("=== ОТВЕТ ОТ RESEND ===", resend_response.status_code, resend_response.text)
 
             if resend_response.status_code >= 400:
@@ -747,11 +746,7 @@ def forgot_password(payload: ForgotPasswordRequest):
                         content={"error": f"Ошибка отправки письма: {resend_response.text}"},
                     )
 
-            if resend_response.status_code >= 400:
-                return JSONResponse(
-                    status_code=500,
-                    content={"error": f"Ошибка отправки письма: {resend_response.text}"},
-                )
+            
 
             return {"status": "success", "message": "Код успешно отправлен!"}
             
