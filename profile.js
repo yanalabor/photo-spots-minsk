@@ -566,7 +566,6 @@ document.getElementById('logoutBtn').addEventListener('click', () => {
         window.location.href = 'index.html';
     }
 });
-
 // ===== СТАРТ И ЛОГИКА АВАТАРА ПРИ ЗАГРУЗКЕ СТРАНИЦЫ =====
 document.addEventListener('DOMContentLoaded', () => {
     // 1. Инициализация данных профиля после полной загрузки DOM
@@ -581,16 +580,53 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (!avatarBlock || !changeBtn || !picker) return;
 
-    // Подгружаем сохраненный аватар пользователя при старте
+    // --- УМНАЯ ПОДГРУЗКА АВАТАРА (Сначала localStorage, затем серверный объект user) ---
     const savedAvatar = localStorage.getItem(`avatar_${currentUserId}`);
+    
     if (savedAvatar) {
+        // Если в localStorage сохранен смайлик или base64
         if (savedAvatar.startsWith('data:image') || savedAvatar.startsWith('http') || savedAvatar.startsWith('/')) {
-            avatarBlock.innerHTML = `<img src="${savedAvatar}" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">`;
+            avatarBlock.innerHTML = `<img src="${savedAvatar}" id="avatarImgElement" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">`;
         } else {
             avatarBlock.textContent = savedAvatar;
         }
+    } else if (user) {
+        // Если в localStorage чисто, вытягиваем аватарку из объекта user, пришедшего с бэкенда
+        let rawPath = user.photo_url || user.avatar || user.image_path || null;
+        
+        if (rawPath) {
+            let avatarUrl = null;
+            if (rawPath.startsWith('http')) {
+                avatarUrl = rawPath;
+            } else {
+                let cleanPath = rawPath.startsWith('/') ? rawPath.substring(1) : rawPath;
+                if (!cleanPath.includes('static/')) {
+                    cleanPath = `static/images/${cleanPath}`;
+                }
+                const base = API_BASE.endsWith('/') ? API_BASE.slice(0, -1) : API_BASE;
+                avatarUrl = `${base}/${cleanPath}`;
+            }
+
+            // Защита от Mixed Content (http -> https)
+            if (avatarUrl.startsWith('http://')) {
+                avatarUrl = avatarUrl.replace('http://', 'https://');
+            }
+
+            // Отрисовываем картинку и вешаем подстраховку от 404 ошибки Railway
+            avatarBlock.innerHTML = `
+                <img src="${avatarUrl}" id="avatarImgElement" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;"
+                     onerror="
+                        console.log('🚨 Ошибка загрузки аватара с сервера:', this.src);
+                        this.src = 'https://cdnjs.cloudflare.com/ajax/libs/twemoji/14.0.2/svg/1f464.svg';
+                        this.style.opacity = '0.6';
+                     ">`;
+        } else {
+            // Если у юзера вообще нет фото, ставим дефолтный силуэт 👤
+            avatarBlock.innerHTML = `<img src="https://cdnjs.cloudflare.com/ajax/libs/twemoji/14.0.2/svg/1f464.svg" id="avatarImgElement" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover; opacity: 0.6;">`;
+        }
     }
 
+    // --- ЛОГИКА ВЫБОРА И ИЗМЕНЕНИЯ АВАТАРА ---
     const togglePicker = (e) => {
         e.stopPropagation();
         picker.style.display = picker.style.display === 'none' ? 'block' : 'none';
@@ -608,6 +644,7 @@ document.addEventListener('DOMContentLoaded', () => {
         item.addEventListener('click', () => {
             const emoji = item.textContent;
             avatarBlock.innerHTML = emoji;
+            avatarBlock.style.opacity = '1';
             localStorage.setItem(`avatar_${currentUserId}`, emoji);
             picker.style.display = 'none';
         });
@@ -621,7 +658,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const reader = new FileReader();
             reader.onload = function (event) {
                 const base64Image = event.target.result;
-                avatarBlock.innerHTML = `<img src="${base64Image}" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">`;
+                avatarBlock.innerHTML = `<img src="${base64Image}" id="avatarImgElement" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">`;
+                avatarBlock.style.opacity = '1';
                 localStorage.setItem(`avatar_${currentUserId}`, base64Image);
                 picker.style.display = 'none';
             };
