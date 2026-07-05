@@ -15,24 +15,25 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from dotenv import load_dotenv
 
+
 import os
 from fastapi import FastAPI
 from dotenv import load_dotenv
 
-# Инициализируем приложение FastAPI
 app = FastAPI(title="Minsk Places API")
 
-# Проверяем, есть ли уже переменная в системе (как в Railway)
-GLOBAL_RESEND_KEY = os.getenv("RESEND_API_KEY")
+# Сначала пробуем считать напрямую
+resend_key = os.getenv("RESEND_API_KEY")
 
-# Если переменной в системе нет (как на локальной машине разработчика),
-# то подтягиваем её из файла .env
-if not GLOBAL_RESEND_KEY:
+if not resend_key:
     load_dotenv()
-    GLOBAL_RESEND_KEY = os.getenv("RESEND_API_KEY")
+    resend_key = os.getenv("RESEND_API_KEY")
+
+# ЗАПИСЫВАЕМ В СОСТОЯНИЕ ПРИЛОЖЕНИЯ (STATE)
+app.state.RESEND_API_KEY = resend_key
 
 print("=== ПРОВЕРКА КЛЮЧА RESEND В RAILWAY ===")
-print(f"Ключ успешно найден и загружен: {bool(GLOBAL_RESEND_KEY)}")
+print(f"Ключ успешно сохранен в app.state: {bool(app.state.RESEND_API_KEY)}")
 print("=======================================")
 
 # --- НАСТРОЙКА CORS ---
@@ -701,12 +702,16 @@ class VerifyResetCodeRequest(BaseModel):
     email: str
     code: str
 
+
+
 @app.post("/api/auth/forgot-password")
-async def forgot_password(payload: ForgotPasswordRequest):
+async def forgot_password(payload: ForgotPasswordRequest, request: Request): # ДОБАВИЛИ request: Request в аргументы
     """Генерирует 5-значный код, записывает в БД и отправляет на Email."""
     
-    # Сразу проверяем глобальный ключ перед тем, как мучить базу данных
-    if not GLOBAL_RESEND_KEY:
+    # Пытаемся достать ключ из state приложения, если там пусто — берем напрямую из os.getenv
+    current_key = request.app.state.RESEND_API_KEY or os.getenv("RESEND_API_KEY")
+    
+    if not current_key:
         return JSONResponse(
             status_code=500, 
             content={"error": "RESEND_API_KEY не настроен на бэкенде (критическая ошибка конфигурации)"}
@@ -731,11 +736,11 @@ async def forgot_password(payload: ForgotPasswordRequest):
                 f"<p>Код действителен для одного входа.</p>"
             )
 
-            # Отправляем запрос, используя сохраненный GLOBAL_RESEND_KEY
+            # Отправляем запрос с гарантированным current_key
             resend_response = requests.post(
                 "https://api.resend.com/emails",
                 headers={
-                    "Authorization": f"Bearer {GLOBAL_RESEND_KEY}",  # Используем глобальный ключ
+                    "Authorization": f"Bearer {current_key}",
                     "Content-Type": "application/json",
                 },
                 json={
