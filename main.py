@@ -22,11 +22,11 @@ app = FastAPI(title="Minsk Places API")
 
 app = FastAPI(title="Minsk Places API")
 
-import os
-print("=== ПРОВЕРКА КЛЮЧА RESEND В RAILWAY ===")
-print("Ключ найден:", os.getenv("RESEND_API_KEY") is not None)
-print("=======================================")
+GLOBAL_RESEND_KEY = os.getenv("RESEND_API_KEY")
 
+print("=== ПРОВЕРКА КЛЮЧА RESEND В RAILWAY ===")
+print(f"Ключ найден: {bool(GLOBAL_RESEND_KEY)}")
+print("=======================================")
 
 # --- НАСТРОЙКА CORS ---
 app.add_middleware(
@@ -695,8 +695,16 @@ class VerifyResetCodeRequest(BaseModel):
     code: str
 
 @app.post("/api/auth/forgot-password")
-def forgot_password(payload: ForgotPasswordRequest):
+async def forgot_password(payload: ForgotPasswordRequest):
     """Генерирует 5-значный код, записывает в БД и отправляет на Email."""
+    
+    # Сразу проверяем глобальный ключ перед тем, как мучить базу данных
+    if not GLOBAL_RESEND_KEY:
+        return JSONResponse(
+            status_code=500, 
+            content={"error": "RESEND_API_KEY не настроен на бэкенде (критическая ошибка конфигурации)"}
+        )
+
     connection = pymysql.connect(**DB_CONFIG)
     try:
         with connection.cursor() as cursor:
@@ -710,24 +718,17 @@ def forgot_password(payload: ForgotPasswordRequest):
             cursor.execute("UPDATE users SET reset_code = %s WHERE email = %s", (otp_code, payload.email))
             connection.commit()
             
-            # Отправка письма через HTTP API (Resend), а не напрямую через SMTP:
-            # у провайдера/сети заблокированы порты 465/587/2525 для прямых SMTP-соединений,
-            # а обычный HTTPS (443) — обычный веб-трафик, который никто не режет.
-            resend_api_key = os.getenv("RESEND_API_KEY")
-
-            if not resend_api_key:
-                return JSONResponse(status_code=500, content={"error": "RESEND_API_KEY не настроен на бэкенде"})
-
             email_html = (
                 f"<p>Ваш одноразовый код для входа на сайт «Фото-места Минска»: "
                 f"<strong>{otp_code}</strong></p>"
                 f"<p>Код действителен для одного входа.</p>"
             )
 
+            # Отправляем запрос, используя сохраненный GLOBAL_RESEND_KEY
             resend_response = requests.post(
                 "https://api.resend.com/emails",
                 headers={
-                    "Authorization": f"Bearer {resend_api_key}",
+                    "Authorization": f"Bearer {GLOBAL_RESEND_KEY}",  # Используем глобальный ключ
                     "Content-Type": "application/json",
                 },
                 json={
@@ -741,12 +742,10 @@ def forgot_password(payload: ForgotPasswordRequest):
             print("=== ОТВЕТ ОТ RESEND ===", resend_response.status_code, resend_response.text)
 
             if resend_response.status_code >= 400:
-                    return JSONResponse(
-                        status_code=500,
-                        content={"error": f"Ошибка отправки письма: {resend_response.text}"},
-                    )
-
-            
+                return JSONResponse(
+                    status_code=500,
+                    content={"error": f"Ошибка отправки письма через Resend: {resend_response.text}"},
+                )
 
             return {"status": "success", "message": "Код успешно отправлен!"}
             
