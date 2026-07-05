@@ -6,3 +6,4 @@ cryptography
 python-dotenv
 python-multipart
 requests
+better-profanity
