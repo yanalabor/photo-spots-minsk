@@ -1,309 +1,368 @@
-<main class="about-main">
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>О проекте — Фото-места Минска</title>
+    <!-- Подключаем основной CSS (стили те же) -->
+    <link rel="stylesheet" href="style.css">
+    <style>
+        /* Локальные стили страницы "О проекте" из исходной версии */
+        .about-main {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 20px;
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            color: #333;
+        }
 
-    <!-- Главное описание -->
-    <section class="about-hero">
-        <div class="about-hero-content">
-            <h1>О проекте «Фото-места Минска»</h1>
+        .about-hero {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 40px;
+            margin-bottom: 60px;
+            background: linear-gradient(135deg, #f8faff 0%, #eef3ff 100%);
+            padding: 40px;
+            border-radius: 24px;
+        }
 
-            <p class="about-hero-subtitle">
-                «Фото-места Минска» — это интерактивная веб-платформа,
-                предназначенная для поиска, публикации и оценки
-                интересных локаций для фотосъемки в городе Минске.
-                Проект ориентирован на фотографов, блогеров,
-                путешественников и всех пользователей,
-                заинтересованных в поиске красивых мест города.
-            </p>
+        .about-hero-content {
+            flex: 1;
+        }
 
-            <div class="about-hero-buttons">
-                <a href="index.html" class="hero-btn primary">
-                    Перейти на карту
-                </a>
-            </div>
+        .about-hero-content h1 {
+            font-size: 2.5rem;
+            color: #1a202c;
+            margin-bottom: 16px;
+            font-weight: 800;
+        }
+
+        .about-hero-subtitle {
+            font-size: 1.15rem;
+            line-height: 1.6;
+            color: #4a5568;
+            margin-bottom: 24px;
+        }
+
+        .about-hero-buttons .hero-btn {
+            display: inline-block;
+            background: #2563eb;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 12px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: background 0.2s;
+        }
+
+        .about-hero-buttons .hero-btn:hover {
+            background: #1d4ed8;
+        }
+
+        .about-hero-image {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+        }
+
+        .section-title {
+            font-size: 2rem;
+            color: #1a202c;
+            margin-bottom: 8px;
+            font-weight: 700;
+            text-align: center;
+        }
+
+        .section-subtitle {
+            text-align: center;
+            color: #718096;
+            margin-bottom: 40px;
+            font-size: 1.1rem;
+        }
+
+        .steps-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 24px;
+            margin-bottom: 60px;
+        }
+
+        .step-card {
+            background: white;
+            padding: 32px;
+            border-radius: 20px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            border: 1px solid #edf2f7;
+            position: relative;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .step-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+
+        .step-number {
+            position: absolute;
+            top: 24px;
+            right: 24px;
+            font-size: 2.5rem;
+            font-weight: 900;
+            color: #ebf8ff;
+            z-index: 1;
+            line-height: 1;
+        }
+
+        .step-icon {
+            font-size: 2rem;
+            margin-bottom: 16px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .step-card h3 {
+            font-size: 1.25rem;
+            color: #2d3748;
+            margin-bottom: 12px;
+            font-weight: 600;
+            position: relative;
+            z-index: 2;
+        }
+
+        .step-card p {
+            color: #4a5568;
+            line-height: 1.5;
+            font-size: 0.95rem;
+            position: relative;
+            z-index: 2;
+        }
+
+        .about-project-section {
+            background: white;
+            border-radius: 24px;
+            padding: 40px;
+            border: 1px solid #edf2f7;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        }
+
+        .about-project-content {
+            display: flex;
+            gap: 40px;
+            align-items: flex-start;
+        }
+
+        .about-text {
+            flex: 2;
+        }
+
+        .about-text h4 {
+            font-size: 1.35rem;
+            color: #1a202c;
+            margin-top: 24px;
+            margin-bottom: 12px;
+        }
+
+        .about-text p {
+            color: #4a5568;
+            line-height: 1.6;
+            margin-bottom: 16px;
+        }
+
+        .about-text ul {
+            padding-left: 20px;
+            margin-bottom: 24px;
+        }
+
+        .about-text li {
+            margin-bottom: 12px;
+            color: #4a5568;
+            line-height: 1.5;
+        }
+
+        .about-stats-box {
+            flex: 1;
+            background: #f7fafc;
+            border-radius: 20px;
+            padding: 30px;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .about-stat {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .about-stat-num {
+            font-size: 1.75rem;
+            font-weight: 800;
+            color: #2563eb;
+            margin-bottom: 4px;
+        }
+
+        .about-stat span:last-child {
+            color: #718096;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        @media (max-width: 768px) {
+            .about-hero {
+                flex-direction: column;
+                padding: 24px;
+            }
+            .about-hero-image {
+                display: none;
+            }
+            .about-project-content {
+                flex-direction: column;
+            }
+            .about-stats-box {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body class="about-page">
+
+    <!-- Шапка приложения -->
+    <header>
+        <div class="logo">
+            <a href="index.html" style="color: white; text-decoration: none;">
+                <h1>Фото-места Минска</h1>
+            </a>
         </div>
+        <nav>
+            <a href="index.html" class="back-btn">← На карту</a>
+            <button id="authBtn" class="back-btn" style="display: none;">Войти</button>
+            <a href="profile.html" id="profileBtn" class="back-btn" style="display: none;">Личный кабинет</a>
+        </nav>
+    </header>
 
-        <div class="about-hero-image">
-            <div class="lens-aperture-animation"
-                 style="width:100%;max-width:400px;height:300px;background:#1e3a5f;border-radius:20px;display:flex;align-items:center;justify-content:center;color:white;font-size:64px;box-shadow:0 10px 40px rgba(0,0,0,0.15);">
-                📷
+    <main class="about-main">
+        <!-- Главное приветствие проекта -->
+        <section class="about-hero">
+            <div class="about-hero-content">
+                <h1>О проекте и его пользе</h1>
+                <p class="about-hero-subtitle">
+                    «Фото-места Минска» — это интерактивная веб-платформа для фотографов, блогеров и путешественников, которая помогает находить самые красивые и необычные локации города для съемок.
+                </p>
+                <div class="about-hero-buttons">
+                    <a href="index.html" class="hero-btn primary">Перейти на карту</a>
+                </div>
             </div>
-        </div>
-    </section>
-
-    <!-- Актуальность -->
-    <section class="about-project-section" style="margin-bottom:40px;">
-        <h2 class="section-title">Актуальность проекта</h2>
-
-        <p class="section-subtitle">
-            Обоснование необходимости разработки системы
-        </p>
-
-        <div class="about-text">
-            <p>
-                В настоящее время фотографы, блогеры, туристы и
-                любители городской фотографии активно используют
-                интернет-ресурсы для поиска интересных мест для
-                съемок. Однако специализированной платформы,
-                объединяющей фотолокации города Минска,
-                практически не существует.
-            </p>
-
-            <p>
-                Проект «Фото-места Минска» решает данную проблему,
-                предоставляя пользователям возможность находить,
-                оценивать, сохранять и самостоятельно публиковать
-                фотолокации, а также обмениваться опытом через
-                систему отзывов и рейтингов.
-            </p>
-        </div>
-    </section>
-
-    <!-- Возможности -->
-    <section class="how-section">
-        <h2 class="section-title">
-            Основные возможности платформы
-        </h2>
-
-        <p class="section-subtitle">
-            Функциональные возможности разработанной системы
-        </p>
-
-        <div class="steps-grid">
-
-            <div class="step-card">
-                <span class="step-number">01</span>
-                <div class="step-icon">📍</div>
-
-                <h3>Поиск локаций</h3>
-
-                <p>
-                    Все объекты отображаются на интерактивной карте
-                    с поддержкой кластеризации маркеров для удобной
-                    навигации.
-                </p>
+            <div class="about-hero-image">
+                <!-- Кастомная анимация лепестков диафрагмы камеры на чистом CSS -->
+                <div class="lens-aperture-animation" style="width: 100%; max-width: 400px; height: 300px; background: #1e3a5f; border-radius: 20px; display: flex; align-items: center; justify-content: center; color: white; font-size: 64px; box-shadow: 0 10px 40px rgba(0,0,0,0.15);">
+                    📷
+                </div>
             </div>
+        </section>
 
-            <div class="step-card">
-                <span class="step-number">02</span>
-                <div class="step-icon">🔍</div>
-
-                <h3>Фильтрация и поиск</h3>
-
-                <p>
-                    Пользователь может искать места по названию,
-                    ключевым словам и тематическим тегам.
-                </p>
+        <!-- Блок функциональных возможностей -->
+        <section class="how-section">
+            <h2 class="section-title">Что здесь можно делать:</h2>
+            <p class="section-subtitle">Основные возможности платформы для пользователей</p>
+            
+            <div class="steps-grid">
+                <div class="step-card">
+                    <span class="step-number">01</span>
+                    <div class="step-icon">📍</div>
+                    <h3>Искать на карте</h3>
+                    <p>Все точки нанесены на удобную интерактивную карту с группировкой (кластеризацией) меток, чтобы интерфейс оставался чистым.</p>
+                </div>
+                <div class="step-card">
+                    <span class="step-number">02</span>
+                    <div class="step-icon">🔍</div>
+                    <h3>Фильтровать по тегам</h3>
+                    <p>Искать места можно через строку поиска или систему хэштегов (например, #архитектура).</p>
+                </div>
+                <div class="step-card">
+                    <span class="step-number">03</span>
+                    <div class="step-icon">💬</div>
+                    <h3>Читать и оставлять отзывы</h3>
+                    <p>У каждого места есть фото, описание, рейтинг и отзывы других пользователей.</p>
+                </div>
+                <div class="step-card">
+                    <span class="step-number">04</span>
+                    <div class="step-icon">⭐</div>
+                    <h3>Управлять контентом</h3>
+                    <p>Авторизованные пользователи могут сохранять точки в «Избранное», делиться мнением и предлагать на карту свои новые находки через личный кабинет.</p>
+                </div>
             </div>
+        </section>
 
-            <div class="step-card">
-                <span class="step-number">03</span>
-                <div class="step-icon">💬</div>
+        <!-- Технический блок -->
+        <section class="about-project-section">
+            <h2 class="section-title">2. Техническая реализация (Как всё устроено)</h2>
+            <p class="section-subtitle">Мы разделили разработку на две части: фронтенд (клиентская визуальная сторона) и бэкенд (сервер и база данных).</p>
 
-                <h3>Отзывы и рейтинги</h3>
+            <div class="about-project-content">
+                <div class="about-text">
+                    <h4>💻 Фронтенд (Клиентская часть)</h4>
+                    <p>Мы сделали интерфейс отзывчивым, быстрым и работающим без лишних перезагрузок страниц:</p>
+                    <ul>
+                        <li><strong>Интерактивная карта:</strong> Интегрировали карту OpenStreetMap с помощью библиотеки Leaflet.js. Настроили кластеризацию, чтобы маркеры не перекрывали друг друга.</li>
+                        <li><strong>Динамический интерфейс:</strong> Используя JavaScript, связали фронтенд с сервером. Поиск, фильтрация, отправка отзывов и добавление в избранное происходят мгновенно.</li>
+                        <li><strong>Личный кабинет:</strong> Реализовали удобную панель с вкладками, где пользователь видит свои подборки, может кастомизировать профиль (выбрать аватар) и прямо по клику на карту предложить новую точку.</li>
+                    </ul>
 
-                <p>
-                    Каждая локация содержит фотографии,
-                    описание, оценки пользователей и отзывы.
-                </p>
-            </div>
+                    <h4>⚙️ Бэкенд (Серверная часть)</h4>
+                    <p>Сервер отвечает за безопасность, обработку запросов и надежное хранение информации:</p>
+                    <ul>
+                        <li><strong>Современный API:</strong> Сервер написан на фреймворке FastAPI (Python). Он быстро обрабатывает запросы от фронтенда и возвращает данные в формате JSON.</li>
+                        <li><strong>База данных:</strong> Используется реляционная БД MySQL. В ней хранятся связанные таблицы пользователей, локаций, отзывов и избранного.</li>
+                        <li><strong>Безопасность:</strong> Пароли пользователей не хранятся в открытом виде — они надежно хэшируются через bcrypt. Также мы добавили логику входа по временному коду, если пользователь забыл свой пароль.</li>
+                    </ul>
 
-            <div class="step-card">
-                <span class="step-number">04</span>
-                <div class="step-icon">⭐</div>
-
-                <h3>Личный кабинет</h3>
-
-                <p>
-                    Пользователь может управлять своим профилем,
-                    избранными местами и собственными публикациями.
-                </p>
-            </div>
-
-        </div>
-    </section>
-
-    <!-- Техническая часть -->
-    <section class="about-project-section">
-
-        <h2 class="section-title">
-            Техническая реализация проекта
-        </h2>
-
-        <p class="section-subtitle">
-            Архитектура системы построена по модели
-            «клиент — сервер — база данных»
-        </p>
-
-        <div class="about-project-content">
-
-            <div class="about-text">
-
-                <h4>💻 Фронтенд (клиентская часть)</h4>
-
-                <p>
-                    При разработке пользовательского интерфейса
-                    мы стремились создать современное,
-                    адаптивное и удобное веб-приложение.
-                </p>
-
-                <ul>
-                    <li>
-                        <strong>Интерактивная карта:</strong>
-                        реализована на основе OpenStreetMap
-                        и библиотеки Leaflet.js.
-                    </li>
-
-                    <li>
-                        <strong>Кластеризация:</strong>
-                        позволяет удобно отображать большое
-                        количество объектов на карте.
-                    </li>
-
-                    <li>
-                        <strong>Динамический интерфейс:</strong>
-                        взаимодействие с сервером происходит
-                        через JavaScript и REST API без
-                        перезагрузки страниц.
-                    </li>
-
-                    <li>
-                        <strong>Личный кабинет:</strong>
-                        реализованы функции управления профилем,
-                        избранными местами, отзывами
-                        и собственными локациями.
-                    </li>
-
-                    <li>
-                        <strong>Адаптивный дизайн:</strong>
-                        интерфейс корректно отображается
-                        на мобильных устройствах и компьютерах.
-                    </li>
-                </ul>
-
-                <h4>⚙️ Бэкенд (серверная часть)</h4>
-
-                <p>
-                    Серверная часть отвечает за обработку запросов,
-                    безопасность и хранение данных.
-                </p>
-
-                <ul>
-                    <li>
-                        <strong>REST API:</strong>
-                        сервер реализован на Python
-                        с использованием FastAPI.
-                    </li>
-
-                    <li>
-                        <strong>База данных:</strong>
-                        используется реляционная СУБД MySQL
-                        для хранения пользователей,
-                        мест, отзывов и избранного.
-                    </li>
-
-                    <li>
-                        <strong>Хранение изображений:</strong>
-                        реализовано локальное файловое
-                        хранилище сервера.
-                    </li>
-
-                    <li>
-                        <strong>Безопасность:</strong>
-                        пароли пользователей защищены
-                        алгоритмом bcrypt.
-                    </li>
-
-                    <li>
-                        <strong>Восстановление доступа:</strong>
-                        реализована система входа
-                        по одноразовому коду.
-                    </li>
-
-                    <li>
-                        <strong>Модерация контента:</strong>
-                        реализована автоматическая
-                        фильтрация нецензурной лексики
-                        в пользовательских комментариях.
-                    </li>
-                </ul>
-
-                <h4>🏗 Архитектура системы</h4>
-
-                <ul>
-                    <li>Frontend: HTML, CSS, JavaScript;</li>
-                    <li>Backend: Python + FastAPI;</li>
-                    <li>База данных: MySQL;</li>
-                    <li>Картографическая система: OpenStreetMap + Leaflet.js;</li>
-                    <li>Хранение файлов: локальное файловое хранилище.</li>
-                </ul>
-
-                <h4>📈 Выводы</h4>
-
-                <p>
-                    В ходе выполнения проекта нами была
-                    разработана полноценная веб-платформа
-                    для поиска и публикации фотолокаций
-                    города Минска.
-                </p>
-
-                <p>
-                    Были реализованы механизмы регистрации
-                    и авторизации пользователей,
-                    интерактивная карта, система отзывов,
-                    рейтингов, избранного,
-                    хранения изображений,
-                    восстановления доступа
-                    и фильтрации пользовательского контента.
-                </p>
-
-                <p>
-                    В процессе разработки мы получили
-                    практический опыт проектирования
-                    клиент-серверных приложений,
-                    работы с базами данных,
-                    REST API и современными
-                    веб-технологиями.
-                </p>
-
-                <p>
-                    Разработанная система является
-                    функционально завершенной
-                    и обладает возможностью
-                    дальнейшего расширения
-                    и масштабирования.
-                </p>
-
-            </div>
-
-            <div class="about-stats-box">
-
-                <div class="about-stat">
-                    <span class="about-stat-num">FastAPI</span>
-                    <span>Backend</span>
+                    <h4>3. Выводы</h4>
+                    <p>В ходе работы мы успешно создали полноценный сайт, решив все архитектурные и интерфейсные задачи.</p>
+                    <p>Мы получили отличный практический опыт в связывании клиентской и серверной частей, проектировании баз данных, работе с интерактивными картами и реализации безопасной авторизации. Проект полностью готов к использованию и легко поддается масштабированию.</p>
                 </div>
 
-                <div class="about-stat">
-                    <span class="about-stat-num">MySQL</span>
-                    <span>База данных</span>
+                <!-- Правая боковая панель со списком ключевых технологий проекта -->
+                <div class="about-stats-box">
+                    <div class="about-stat">
+                        <span class="about-stat-num">FastAPI</span>
+                        <span>Backend фреймворк</span>
+                    </div>
+                    <div class="about-stat">
+                        <span class="about-stat-num">MySQL</span>
+                        <span>База данных</span>
+                    </div>
+                    <div class="about-stat">
+                        <span class="about-stat-num">Leaflet.js</span>
+                        <span>Картография</span>
+                    </div>
                 </div>
-
-                <div class="about-stat">
-                    <span class="about-stat-num">Leaflet.js</span>
-                    <span>Картография</span>
-                </div>
-
-                <div class="about-stat">
-                    <span class="about-stat-num">bcrypt</span>
-                    <span>Безопасность</span>
-                </div>
-
-                <div class="about-stat">
-                    <span class="about-stat-num">REST API</span>
-                    <span>Обмен данными</span>
-                </div>
-
             </div>
+        </section>
+    </main>
 
+    <!-- Подвал страницы -->
+    <footer class="about-footer">
+        <div class="footer-bottom">
+            <p>© 2026 Фото-места Минска. Все права защищены.</p>
         </div>
-    </section>
+    </footer>
 
-</main>
+    <!-- Подключение общей логики API -->
+    <script src="api_v2.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const authBtn = document.getElementById('authBtn');
+            const profileBtn = document.getElementById('profileBtn');
+            
+            if (typeof isLoggedIn === 'function' && isLoggedIn()) {
+                if (profileBtn) profileBtn.style.display = 'inline-block';
+            } else {
+                if (authBtn) authBtn.style.display = 'inline-block';
+            }
+        });
+    </script>
+</body>
+</html>
