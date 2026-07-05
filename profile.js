@@ -190,7 +190,9 @@ function renderReviewsTab(reviews) {
                 
                 ${reviewImageUrl ? `
                     <div class="review-image-container" style="margin-bottom: 12px; margin-top: 5px;">
-                      <img src="${reviewImageUrl}" alt="Фото к отзыву" style="max-width: 100%; max-height: 250px; border-radius: 6px; object-fit: cover; display: block; box-shadow: 0 1px 3px rgba(0,0,0,0.1);" onerror="console.log('🚨 Ошибка загрузки картинки. Исходный src:', this.getAttribute('src')); if(!this.X){this.X=true; const s=this.getAttribute('src'); this.src=window.API_BASE+(s.startsWith('/')?'':'/')+s; console.log('🔄 Пробуем загрузить с бэкенда:', this.src);}else{console.log('❌ Не удалось загрузить ниоткуда, скрываем.'); this.style.display='none';}">
+                        <img src="${reviewImageUrl}" alt="Фото к отзыву" 
+                             style="max-width: 100%; max-height: 250px; border-radius: 6px; object-fit: cover; display: block; box-shadow: 0 1px 3px rgba(0,0,0,0.1);" 
+                             onerror="console.log('🚨 Ошибка загрузки картинки. Исходный src:', this.src); if(!this.X){this.X=true; if(!this.src.includes('/static/')){ this.src='${API_BASE}/static/images/'+'${review.image || review.photo_url || ''}'; }else{ this.src='${API_BASE}/static/images/'+this.src.split('/').pop(); } console.log('🔄 Попытка восстановления пути:', this.src);}else{console.log('❌ Не удалось загрузить фото, скрываем элемент.'); this.style.display='none';}">
                     </div>
                 ` : ''}
 
