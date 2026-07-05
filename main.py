@@ -12,8 +12,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from dotenv import load_dotenv
-from better_profanity import profanity
-profanity.load_censor_words()
+import re
 
 # 1. Загружаем переменные окружения
 load_dotenv()
@@ -53,20 +52,33 @@ DB_CONFIG = {
 # ==========================================
 # ХЕЛПЕРЫ И ЦЕНЗОР ТЕКСТА
 # ==========================================
-BAD_WORDS = ["мат1", "мат2", "сука", "блять", "хуй", "пидор", "ебать"] 
+BAD_WORDS = [
+    "бля",
+    "хуй",
+    "еб",
+    "пизд",
+    "сук",
+    "пидор",
+    "мудак",
+    "гондон",
+    "залуп",
+    "шлюх"
+]
 
 def censor_text(text: str) -> str:
     if not text:
         return text
-    words = text.split()
-    censored_words = []
-    for word in words:
-        clean_word = word.lower().strip(".,!?-*()")
-        if clean_word in BAD_WORDS:
-            censored_words.append("*" * len(word))
-        else:
-            censored_words.append(word)
-    return " ".join(censored_words)
+
+    def replace_word(match):
+        word = match.group(0)
+        lower = word.lower()
+
+        if any(bad in lower for bad in BAD_WORDS):
+            return "*" * len(word)
+
+        return word
+
+    return re.sub(r'\b[\wёЁа-яА-Я]+\b', replace_word, text)
 
 
 def normalize_place(item: dict, request: Request) -> dict:
