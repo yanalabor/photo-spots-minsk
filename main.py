@@ -52,9 +52,12 @@ DB_CONFIG = {
 # ==========================================
 # ХЕЛПЕРЫ И ЦЕНЗОР ТЕКСТА
 # ==========================================
+import re
+
 BAD_WORDS = [
     "бля",
     "хуй",
+    "хуе",
     "еб",
     "пизд",
     "сук",
@@ -62,23 +65,41 @@ BAD_WORDS = [
     "мудак",
     "гондон",
     "залуп",
-    "шлюх"
+    "шлюх",
+    "дроч",
+    "мраз",
+    "твар"
 ]
 
 def censor_text(text: str) -> str:
     if not text:
         return text
 
-    def replace_word(match):
-        word = match.group(0)
-        lower = word.lower()
+    # Проверяем текст целиком без пробелов и разделителей
+    normalized_text = re.sub(r'[^а-яё]', '', text.lower())
 
-        if any(bad in lower for bad in BAD_WORDS):
-            return "*" * len(word)
+    # Если нашли мат, написанный через пробелы/точки/дефисы
+    if any(bad in normalized_text for bad in BAD_WORDS):
+        words = text.split()
+        result = []
 
-        return word
+        for word in words:
+            clean = re.sub(r'[^а-яё]', '', word.lower())
 
-    return re.sub(r'\b[\wёЁа-яА-Я]+\b', replace_word, text)
+            # обычный мат
+            if any(bad in clean for bad in BAD_WORDS):
+                result.append('*' * len(word))
+            # случай "с у к а", "х у й" и т.д.
+            elif len(word) == 1 and any(
+                bad in normalized_text for bad in BAD_WORDS
+            ):
+                result.append('*')
+            else:
+                result.append(word)
+
+        return ' '.join(result)
+
+    return text
 
 
 def normalize_place(item: dict, request: Request) -> dict:
