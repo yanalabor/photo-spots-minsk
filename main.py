@@ -150,9 +150,14 @@ def attach_review_photo(review: dict, request: Request) -> dict:
     base = str(request.base_url).rstrip("/")
     raw = review.get("photo_url")
     if raw:
-        review["image"] = base + raw if raw.startswith("/") else raw
+       path = STATIC_DIR / "images" / Path(raw).name
+        
+       if path.exists():
+           review["image"] = base + raw if raw.startswith("/") else raw
+       else:
+           review["image"] = None
     else:
-        review["image"] = None
+           review["image"] = None
     return review
 
 
@@ -245,8 +250,8 @@ def create_place(
 
             photo_url = None
             if file is not None and file.filename:
-                ext = file.filename.split(".")[-1]
-                file_name = f"{new_id}_photo.{ext}"
+                ext = Path(file.filename).suffix or ".jpg"
+                file_name = f"place_{new_id}{ext}"
                 photo_url = save_uploaded_file(file, file_name)
                 cursor.execute("UPDATE places SET photo_url = %s WHERE id = %s", (photo_url, new_id))
                 connection.commit()
@@ -369,8 +374,9 @@ def add_review(
 
             photo_url = None
             if file is not None and file.filename:
-                ext = file.filename.split(".")[-1]
-                file_name = f"review_{new_id}.{ext}"
+                
+                ext = Path(file.filename).suffix or ".jpg"
+                file_name = f"review_{new_id}{ext}"
                 photo_url = save_uploaded_file(file, file_name)
                 cursor.execute("UPDATE reviews SET photo_url = %s WHERE id = %s", (photo_url, new_id))
                 connection.commit()
@@ -417,7 +423,7 @@ async def update_review(
             
             if file and file.filename:
                 file_extension = Path(file.filename).suffix
-                unique_filename = f"review_{review_id}_{random.randint(1000, 9999)}{file_extension}"
+                unique_filename = f"review_{review_id}{file_extension}"
                 photo_url = save_uploaded_file(file, unique_filename)
 
             sql = """
