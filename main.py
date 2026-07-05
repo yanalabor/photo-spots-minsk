@@ -12,6 +12,8 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from dotenv import load_dotenv
+from better_profanity import profanity
+profanity.load_censor_words()
 
 # 1. Загружаем переменные окружения
 load_dotenv()
