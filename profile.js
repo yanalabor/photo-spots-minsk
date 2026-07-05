@@ -141,7 +141,6 @@ function renderFavoritesTab(favs) {
         grid.appendChild(card);
     });
 }
-
 function renderReviewsTab(reviews) {
     const list = document.getElementById('profileReviewsList');
     const empty = document.getElementById('emptyReviews');
@@ -165,17 +164,27 @@ function renderReviewsTab(reviews) {
         const ratingValue = review.rating || review.stars || review.score || 0;
         const starsHtml = '⭐'.repeat(ratingValue) + '☆'.repeat(5 - ratingValue);
 
-        // ЖЕЛЕЗНО берём путь к фото из базы данных
-        let reviewImageUrl = review.image || review.photo_url || review.image_path || null;
+        // 1. Извлекаем чистую строку пути из всех возможных полей объекта
+        let rawPath = review.image || review.photo_url || review.image_path || null;
+        let reviewImageUrl = null;
 
-        if (reviewImageUrl && !reviewImageUrl.startsWith('http')) {
-            // Если в пути ещё нет '/static/', добавляем правильный префикс папки бэкенда
-            if (!reviewImageUrl.includes('/static/')) {
-                const cleanPath = reviewImageUrl.startsWith('/') ? reviewImageUrl.substring(1) : reviewImageUrl;
-                reviewImageUrl = `/static/images/${cleanPath}`;
+        if (rawPath) {
+            // Если в базе уже лежит полный url (http...), используем его
+            if (rawPath.startsWith('http')) {
+                reviewImageUrl = rawPath;
+            } else {
+                // Очищаем от лишних слэшей в начале
+                let cleanPath = rawPath.startsWith('/') ? rawPath.substring(1) : rawPath;
+                
+                // Если бэкенд не добавил 'static/images/', дописываем сами
+                if (!cleanPath.includes('static/')) {
+                    cleanPath = `static/images/${cleanPath}`;
+                }
+                
+                // Формируем финальный URL, используя глобальный API_BASE
+                const base = API_BASE.endsWith('/') ? API_BASE.slice(0, -1) : API_BASE;
+                reviewImageUrl = `${base}/${cleanPath}`;
             }
-            // Соединяем с базовым URL бэкенда
-            reviewImageUrl = `${API_BASE}${reviewImageUrl.startsWith('/') ? '' : '/'}${reviewImageUrl}`;
         }
 
         item.innerHTML = `
@@ -192,7 +201,14 @@ function renderReviewsTab(reviews) {
                     <div class="review-image-container" style="margin-bottom: 12px; margin-top: 5px;">
                         <img src="${reviewImageUrl}" alt="Фото к отзыву" 
                              style="max-width: 100%; max-height: 250px; border-radius: 6px; object-fit: cover; display: block; box-shadow: 0 1px 3px rgba(0,0,0,0.1);" 
-                             onerror="console.log('🚨 Ошибка загрузки картинки. Исходный src:', this.src); if(!this.X){this.X=true; if(!this.src.includes('/static/')){ this.src='${API_BASE}/static/images/'+'${review.image || review.photo_url || ''}'; }else{ this.src='${API_BASE}/static/images/'+this.src.split('/').pop(); } console.log('🔄 Попытка восстановления пути:', this.src);}else{console.log('❌ Не удалось загрузить фото, скрываем элемент.'); this.style.display='none';}">
+                             onerror="
+                                console.log('🚨 Ошибка загрузки. Полный src:', this.src);
+                                const errContainer = document.createElement('div');
+                                errContainer.style.cssText = 'color: #e74c3c; font-size: 11px; background: #fdf2f2; padding: 6px; border-radius: 4px; border: 1px dashed #e74c3c; margin-top: 5px;';
+                                errContainer.innerHTML = '<b>Ошибка фото:</b> не удалось загрузить с сервера.<br>Попытка обращения к: <code style=&quot;word-break: break-all;&quot;>' + this.src + '</code>';
+                                this.parentElement.appendChild(errContainer);
+                                this.style.display = 'none';
+                             ">
                     </div>
                 ` : ''}
 
@@ -209,7 +225,7 @@ function renderReviewsTab(reviews) {
 
         // --- ЛОГИКА: РЕДАКТИРОВАНИЕ ОТЗЫВА ---
         item.querySelector('.edit-review-btn').addEventListener('click', () => {
-            if (item.querySelector('.edit-review-form-inline')) return; // защита от дублирования формы
+            if (item.querySelector('.edit-review-form-inline')) return;
 
             const mainContent = item.querySelector('.review-main-content');
             mainContent.style.display = 'none';
