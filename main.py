@@ -15,17 +15,24 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from dotenv import load_dotenv
 
-# 1. Загружаем переменные окружения
-load_dotenv()
+import os
+from fastapi import FastAPI
+from dotenv import load_dotenv
 
+# Инициализируем приложение FastAPI
 app = FastAPI(title="Minsk Places API")
 
-app = FastAPI(title="Minsk Places API")
+# Проверяем, есть ли уже переменная в системе (как в Railway)
+GLOBAL_RESEND_KEY = os.getenv("RESEND_API_KEY")
 
-GLOBAL_RESEND_KEY = "re_NTTj6e1Y_JdpjDCtnLjeaYhn4xGqbUK72"
+# Если переменной в системе нет (как на локальной машине разработчика),
+# то подтягиваем её из файла .env
+if not GLOBAL_RESEND_KEY:
+    load_dotenv()
+    GLOBAL_RESEND_KEY = os.getenv("RESEND_API_KEY")
 
 print("=== ПРОВЕРКА КЛЮЧА RESEND В RAILWAY ===")
-print(f"Ключ найден: {bool(GLOBAL_RESEND_KEY)}")
+print(f"Ключ успешно найден и загружен: {bool(GLOBAL_RESEND_KEY)}")
 print("=======================================")
 
 # --- НАСТРОЙКА CORS ---
