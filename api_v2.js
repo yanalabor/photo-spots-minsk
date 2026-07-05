@@ -333,6 +333,9 @@ async function requestResetCode(email) {
 /**
  * Отправляет email и введённый код для проверки
  */
+/**
+ * Отправляет email и введённый код для проверки и авторизует пользователя
+ */
 async function verifyResetCode(email, code) {
     // Делаем POST-запрос на бэкенд для валидации OTP
     const data = await apiRequest('/api/auth/verify-reset-code', {
@@ -342,5 +345,21 @@ async function verifyResetCode(email, code) {
             code: code
         })
     });
+    
+    // Если проверка прошла успешно и бэкенд вернул пользователя, логиним его в системе
+    if (data && (data.id || data.user_id)) {
+        const userId = data.id ?? data.user_id;
+        
+        currentUser = {
+            id: parseInt(userId),
+            name: data.username || email,
+            email: data.email || email
+        };
+        
+        // Сохраняем в localStorage, чтобы сессия не сбрасывалась при перезагрузке
+        localStorage.setItem('currentUser', JSON.stringify(currentUser));
+        console.log('✅ Успешный вход по OTP-коду. Пользователь:', currentUser.name);
+    }
+    
     return data;
 }
