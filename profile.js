@@ -166,13 +166,12 @@ function renderReviewsTab(reviews) {
         const starsHtml = '⭐'.repeat(ratingValue) + '☆'.repeat(5 - ratingValue);
 
         // ЖЕЛЕЗНО берём путь к фото из базы данных
-        let reviewImageUrl = review.photo_url || review.image || null;
+        let reviewImageUrl = review.image || review.photo_url|| null;
 
-        // БЕЗОПАСНАЯ СБОРКА ССЫЛКИ: если путь относительный (например, /static/...), 
-        // подставляем адрес текущего хоста (например, http://127.0.0.1:8000), чтобы не падала ошибка
-        // Сборка ссылки напрямую на бэкенд FastAPI
+        // Если вдруг пришёл только относительный путь (без готового image) — достраиваем
+        // через API_BASE (реальный адрес бэкенда), а не захардкоженный localhost
         if (reviewImageUrl && !reviewImageUrl.startsWith('http')) {
-            reviewImageUrl = `http://127.0.0.1:8000${reviewImageUrl.startsWith('/') ? '' : '/'}${reviewImageUrl}`;
+        reviewImageUrl = `${API_BASE}${reviewImageUrl.startsWith('/') ? '' : '/'}${reviewImageUrl}`;
         }
 
         item.innerHTML = `
@@ -187,7 +186,7 @@ function renderReviewsTab(reviews) {
                 
                 ${reviewImageUrl ? `
                     <div class="review-image-container" style="margin-bottom: 12px; margin-top: 5px;">
-                      <img src="${reviewImageUrl}" alt="Фото к отзыву" style="max-width: 100%; max-height: 250px; border-radius: 6px; object-fit: cover; display: block; box-shadow: 0 1px 3px rgba(0,0,0,0.1);" onerror="console.log('🚨 Ошибка загрузки картинки. Исходный src:', this.getAttribute('src')); if(!this.X){this.X=true; const s=this.getAttribute('src'); this.src='http://127.0.0.1:8000'+(s.startsWith('/')?'':'/')+s; console.log('🔄 Пробуем загрузить с бэкенда:', this.src);}else{console.log('❌ Не удалось загрузить ниоткуда, скрываем.'); this.style.display='none';}">
+                      <img src="${reviewImageUrl}" alt="Фото к отзыву" style="max-width: 100%; max-height: 250px; border-radius: 6px; object-fit: cover; display: block; box-shadow: 0 1px 3px rgba(0,0,0,0.1);" onerror="console.log('🚨 Ошибка загрузки картинки. Исходный src:', this.getAttribute('src')); if(!this.X){this.X=true; const s=this.getAttribute('src'); this.src=window.API_BASE+(s.startsWith('/')?'':'/')+s; console.log('🔄 Пробуем загрузить с бэкенда:', this.src);}else{console.log('❌ Не удалось загрузить ниоткуда, скрываем.'); this.style.display='none';}"">
                     </div>
                 ` : ''}
 
