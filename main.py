@@ -22,7 +22,7 @@ app = FastAPI(title="Minsk Places API")
 
 app = FastAPI(title="Minsk Places API")
 
-GLOBAL_RESEND_KEY = os.getenv("RESEND_API_KEY")
+GLOBAL_RESEND_KEY = "re_NTTj6e1Y_JdpjDCtnLjeaYhn4xGqbUK72"
 
 print("=== ПРОВЕРКА КЛЮЧА RESEND В RAILWAY ===")
 print(f"Ключ найден: {bool(GLOBAL_RESEND_KEY)}")
